@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>عابدين</title>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  body{margin:0;font-family:sans-serif;background:#f3f4f6;color:#1f2937;transition:0.5s;}
+  html.dark body{background:#0f172a;color:#e2e8f0;} 
+
+  header{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.1);position:sticky;top:0;z-index:50;transition:0.5s;}
+  html.dark header{background:#1e293b;}
+  header h1{font-size:1.2rem;} /* عنوان أصغر */
+
+  #toggle-dark{padding:0.4rem;border-radius:9999px;background:#e5e7eb;cursor:pointer;transition:0.3s;font-size:1rem;}
+  html.dark #toggle-dark{background:#334155;}
+
+  main{padding:1rem;display:flex;flex-direction:column;gap:1.5rem;}
+  .card{background:#fff;border-radius:1rem;padding:1rem;box-shadow:0 4px 6px rgba(0,0,0,0.1);transition:0.5s;}
+  html.dark .card{background:#1e293b;}
+
+  .card-header{width:100%;display:flex;justify-content:space-between;align-items:center;font-size:1rem;font-weight:600;background:none;border:none;cursor:pointer;padding:0;}
+  .card-content{margin-top:1rem;display:flex;flex-direction:column;gap:0.75rem;}
+  .hidden{display:none;}
+  .rotate-180{transform:rotate(180deg);transition:0.3s;}
+
+  ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.5rem;}
+  select,textarea{width:100%;padding:0.4rem;border-radius:0.5rem;border:1px solid #d1d5db;font-size:0.9rem;transition:0.5s;}
+  textarea#gratitude-text{height:2.5rem;font-size:0.85rem;width:20.5rem} /* حقل الامتنان أصغر */
+  select:focus,textarea:focus{outline:none;border-color:#3b82f6;}
+  html.dark select,html.dark textarea{background:#334155;border-color:#475569;color:#e2e8f0;}
+
+  .progress-bar-bg{width:100%;background:#d1d5db;height:0.75rem;border-radius:9999px;overflow:hidden;}
+  html.dark .progress-bar-bg{background:#475569;}
+  .progress-bar-fill{height:100%;border-radius:9999px;}
+  .quran-fill{background:#16a34a;}
+  .dhikr-fill{background:#2563eb;}
+
+  .btn{padding:0.4rem 0.8rem;border-radius:0.5rem;color:#fff;border:none;font-size:0.9rem;cursor:pointer;transition:0.3s;}
+  .btn-green{background:#16a34a;}
+  .btn-blue{background:#2563eb;}
+  .btn-purple{background:#7c3aed;}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .text-sm{font-size:0.75rem;color:#6b7280;}
+  html.dark .text-sm{color:#cbd5e1;} 
+
+  #clock{text-align:center;font-size:1rem;margin-top:0.5rem;color:#1f2937;}
+  html.dark #clock{color:#e2e8f0;} 
+
+  /* ألوان الأسهم في الوضع الليلي */
+  .card-header i{color:#1f2937;transition:0.3s;}
+  html.dark .card-header i{color:#facc15;} /* أصفر فاتح */
+
+  /* ألوان عناوين البطاقات في الوضع الليلي */
+  html.dark #btn-salah span,
+  html.dark #btn-quran span,
+  html.dark #btn-azkar span,
+  html.dark #btn-gratitude span {color:#FFFFFF;}
+
+
+/* الأسهم في البطاقات في الوضع الليلي */
+html.dark #arrow-salah,
+html.dark #arrow-quran,
+html.dark #arrow-azkar,
+html.dark #arrow-gratitude {
+  color: #FFFFFF; /* أصفر فاتح */
+}
+
+  /* تصميم زر الصلاة */
+  .prayer-btn{
+    width:2.5rem;height:2.5rem;border-radius:0.5rem;background:#3b82f6;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:0.3s;
+  }
+  .prayer-btn:disabled{background:#9ca3af;cursor:not-allowed;}
+  .prayer-btn.done{background:#16a34a;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌙 عابدين</h1>
+  <button id="toggle-dark">🌙</button>
+</header>
+
+<div id="clock"></div>
+
+<main>
+
+  <!-- الصلاة -->
+  <div class="card">
+    <button class="card-header" id="btn-salah">
+      <span><i data-lucide="sun"></i> الصلوات</span>
+      <i id="arrow-salah" data-lucide="chevron-down"></i>
+    </button>
+    <div id="salah" class="card-content hidden">
+      <p class="text-sm">الأوقات اليومية من الإنترنت</p>
+      <ul id="prayer-times"></ul>
+    </div>
+  </div>
+
+  <!-- القرآن -->
+  <div class="card">
+    <button class="card-header" id="btn-quran">
+      <span><i data-lucide="book"></i> القرآن</span>
+      <i id="arrow-quran" data-lucide="chevron-down"></i>
+    </button>
+    <div id="quran" class="card-content hidden">
+      <label>اختر وردك:</label>
+      <select id="quran-choice">
+        <option value="rubu">ربع حزب (2.5 صفحة)</option>
+        <option value="hizb">حزب (10 صفحات)</option>
+        <option value="juz">جزء (20 صفحة)</option>
+      </select>
+      <div class="progress-bar-bg"><div id="quran-progress" class="progress-bar-fill quran-fill" style="width:0%;"></div></div>
+      <button onclick="updateQuranProgress()" class="btn btn-green">أنجزت وردي</button>
+    </div>
+  </div>
+
+  <!-- الأذكار -->
+  <div class="card">
+    <button class="card-header" id="btn-azkar">
+      <span><i data-lucide="heart"></i> الأذكار</span>
+      <i id="arrow-azkar" data-lucide="chevron-down"></i>
+    </button>
+    <div id="azkar" class="card-content hidden">
+      <p>اذكر الله ٣ مرات:</p>
+      <button onclick="doneDhikr()" class="btn btn-blue">ذكرت</button>
+      <div class="progress-bar-bg"><div id="dhikr-progress" class="progress-bar-fill dhikr-fill" style="width:0%;"></div></div>
+    </div>
+  </div>
+
+  <!-- الامتنان -->
+  <div class="card">
+    <button class="card-header" id="btn-gratitude">
+      <span><i data-lucide="smile"></i> الامتنان</span>
+      <i id="arrow-gratitude" data-lucide="chevron-down"></i>
+    </button>
+    <div id="gratitude" class="card-content hidden">
+      <textarea id="gratitude-text" placeholder="اكتب شيئا جميلا حدث اليوم"></textarea>
+      <button onclick="saveGratitude()" class="btn btn-purple">حفظ</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+// الوضع الليلي مع تبديل الهلال والشمس
+const toggleBtn=document.getElementById("toggle-dark");
+toggleBtn.addEventListener("click",()=>{
+  document.documentElement.classList.toggle("dark");
+  toggleBtn.textContent=document.documentElement.classList.contains("dark")?"☀️":"🌙";
+});
+
+// الساعة الحية
+function updateClock(){
+  const now=new Date();
+  const formatted=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'numeric',second:'numeric',hour12:true});
+  document.getElementById("clock").textContent=formatted;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// التحكم بالكروت
+const cards=[
+  {btn:"btn-salah",content:"salah",arrow:"arrow-salah"},
+  {btn:"btn-quran",content:"quran",arrow:"arrow-quran"},
+  {btn:"btn-azkar",content:"azkar",arrow:"arrow-azkar"},
+  {btn:"btn-gratitude",content:"gratitude",arrow:"arrow-gratitude"}
+];
+cards.forEach(c=>{
+  document.getElementById(c.btn).addEventListener("click",()=>{
+    const section=document.getElementById(c.content);
+    const arrow=document.getElementById(c.arrow);
+    section.classList.toggle("hidden");
+    arrow.classList.toggle("rotate-180");
+  });
+});
+
+// مواقيت الصلاة مع زر المسجد الجديد
+async function fetchPrayerTimes(){
+  try{
+    const res=await fetch("https://api.aladhan.com/v1/timingsByCity?city=Jeddah&country=SA&method=4");
+    const data=await res.json();
+    const times=data.data.timings;
+    const list=document.getElementById("prayer-times");
+    list.innerHTML="";
+    const names={Fajr:"الفجر",Dhuhr:"الظهر",Asr:"العصر",Maghrib:"المغرب",Isha:"العشاء"};
+    const now=new Date();
+    for(let key in names){
+      let [hour,minute]=times[key].split(":");
+      let prayerTime=new Date(); prayerTime.setHours(parseInt(hour)); prayerTime.setMinutes(parseInt(minute)); prayerTime.setSeconds(0);
+      let formatted=prayerTime.toLocaleTimeString('en-US',{hour:'numeric',minute:'numeric',hour12:true});
+
+      const li=document.createElement("li"); li.style.display="flex"; li.style.alignItems="center"; li.style.gap="0.5rem";
+      const span=document.createElement("span"); span.textContent=`${names[key]} - ${formatted}`;
+      const btn=document.createElement("button"); 
+      btn.className="prayer-btn"; 
+      btn.innerHTML="🕌";
+      if(now<prayerTime){btn.disabled=true;}
+      btn.addEventListener("click",()=>{
+        btn.classList.add("done");
+        btn.innerHTML="✅";
+        btn.disabled=true;
+      });
+      li.appendChild(span); li.appendChild(btn); list.appendChild(li);
+    }
+  }catch(e){console.error(e);}
+}
+fetchPrayerTimes();
+
+// القرآن
+let quranProgress=0;
+function updateQuranProgress(){
+  const choice=document.getElementById("quran-choice").value;
+  let step=choice==="rubu"?(2.5/604)*100:choice==="hizb"?(10/604)*100:(20/604)*100;
+  quranProgress+=step;if(quranProgress>100)quranProgress=100;
+  document.getElementById("quran-progress").style.width=quranProgress+"%";
+}
+
+// الأذكار
+let dhikrCount=0;
+function doneDhikr(){
+  dhikrCount++;let percent=(dhikrCount/3)*100;if(percent>100)percent=100;
+  document.getElementById("dhikr-progress").style.width=percent+"%";
+}
+
+// الامتنان
+function saveGratitude(){
+  const text=document.getElementById("gratitude-text").value;
+  alert("تم الحفظ: "+text);
+}
+</script>
+</body>
+</html>
