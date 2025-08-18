@@ -166,42 +166,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// وظائف المجتمع
-function joinCommunity() {
-  alert("مرحباً بك في مجتمع عابدين! 🌟\nستتمكن من التواصل مع الأعضاء الآخرين ومشاركة تقدمك.");
-}
-
-function shareProgress() {
-  const progress = {
-    quran: quranProgress,
-    dhikr: dhikrCount,
-    prayers: document.querySelectorAll('.prayer-btn.done').length
-  };
-  
-  const userPoints = calculateUserPoints();
-  const userLevel = Math.floor(userPoints / 5) + 1; // مستوى جديد كل 5 نقاط
-  
-  let message = "تقدمي اليوم:\n";
-  if (progress.quran > 0) {
-    message += `📖 القرآن: ${progress.quran.toFixed(1)}%\n`;
-  }
-  if (progress.dhikr > 0) {
-    message += `💙 الأذكار: ${progress.dhikr}/3\n`;
-  }
-  if (progress.prayers > 0) {
-    message += `🕌 الصلوات: ${progress.prayers}/5\n`;
-  }
-  
-  message += `\n🏆 النقاط: ${userPoints} نقطة\n`;
-  message += `⭐ المستوى: ${userLevel}\n`;
-  
-  if (progress.quran === 0 && progress.dhikr === 0 && progress.prayers === 0) {
-    message = "لم أكمل أي نشاط بعد اليوم. سأبدأ الآن! 💪";
-  }
-  
-  alert(message);
-}
-
 // تحديث إحصائيات المجتمع
 function updateCommunityStats() {
   const totalMembers = Math.floor(Math.random() * 500) + 1000;

@@ -239,24 +239,6 @@ html.dark .stat-label {
   color: #cbd5e1;
 }
 
-.community-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.community-actions .btn {
-  flex: 1;
-  min-width: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-
-
 /* تصميم تبويب المجتمع */
 .community-tab {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -714,16 +696,8 @@ html.dark .my-rank-item {
   .stat-number {
     font-size: 1.3rem;
   }
-  
-  .community-actions {
-    flex-direction: column;
-  }
-  
-  .community-actions .btn {
-    min-width: auto;
-  }
-  
-  /* تحسين تبويب المجتمع للشاشات الصغيرة */
+   
+   /* تحسين تبويب المجتمع للشاشات الصغيرة */
   .community-tab {
     padding: 1.5rem 1rem;
     margin-top: 1.5rem;
