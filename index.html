@@ -6,6 +6,15 @@
 <title>عابدين</title>
 <link rel="icon" type="image/x-icon" href="logo1.icon">
 <link rel="shortcut icon" type="image/x-icon" href="logo1.icon">
+<!-- Apply saved theme before CSS loads to avoid flash -->
+<script>
+  try {
+    var t = localStorage.getItem('theme');
+    if (t === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  } catch (e) {}
+</script>
 <link rel="stylesheet" href="styles.css">
 <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -19,10 +28,13 @@
         <i data-lucide="heart"></i> عباداتي
       </button>
       <button class="tab-btn" id="tab-community">
-        <i data-lucide="users"></i> المجتمع
+        <i data-lucide="users"></i> تحدياتي
       </button>
     </div>
-    <button id="toggle-dark">🌙</button>
+    <button id="hamburger-menu" class="hamburger-btn" aria-label="القائمة"><span></span><span></span><span></span></button>
+  </div>
+  <div id="side-menu" class="side-menu hidden">
+    <button id="toggle-dark-menu" class="side-menu-item">🌙 الوضع الليلي</button>
   </div>
 </header>
 
@@ -63,14 +75,14 @@
     <!-- الأذكار -->
     <div class="card">
       <button class="card-header" id="btn-azkar">
-        <span><i data-lucide="heart"></i> الأذكار</span>
-        <i id="arrow-azkar" data-lucide="chevron-down"></i>
+        <span><i data-lucide="heart"></i> الأذكار (قريبًا)</span>
+       <!-- <i id="arrow-azkar" data-lucide="chevron-down"></i>
       </button>
       <div id="azkar" class="card-content hidden">
         <p>اذكر الله ٣ مرات:</p>
         <button onclick="doneDhikr()" class="btn btn-blue">ذكرت</button>
         <div class="progress-bar-bg"><div id="dhikr-progress" class="progress-bar-fill dhikr-fill" style="width:0%;"></div></div>
-      </div>
+      </div>-->
     </div>
 
     <!-- الامتنان -->
@@ -88,120 +100,36 @@
 </div>
 
 <div id="community-section" class="content-section">
-  <!-- تبويب المجتمع -->
+  <!-- تبويب التحديات -->
   <div class="community-tab">
     <div class="community-header">
-      <h2><i data-lucide="users"></i> المجتمع</h2>
-      <p class="community-subtitle">انضم لمجتمع عابدين وشارك تقدمك مع الآخرين</p>
-    </div>
-    
-    <div class="community-content">
-      <div class="community-stats">
-        <div class="stat-item">
-          <div class="stat-number">1,234</div>
-          <div class="stat-label">عضو نشط</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number">567</div>
-          <div class="stat-label">ورد اليوم</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number">89</div>
-          <div class="stat-label">صلاة جماعة</div>
-        </div>
-      </div>
-      
-      <!-- قسم المسابقة -->
-      <div class="competition-section">
-        <div class="competition-header">
-          <h3><i data-lucide="trophy"></i> مسابقة هذا الأسبوع</h3>
-          <p class="competition-subtitle">تنافس مع الأعضاء الآخرين وارتق في التصنيف</p>
-        </div>
-        
-        <div class="leaderboard">
-          <div class="leaderboard-item top-1">
-            <div class="rank">🥇</div>
-            <div class="user-info">
-              <div class="user-avatar">👤</div>
-              <div class="user-details">
-                <div class="user-name">أحمد محمد</div>
-                <div class="user-level">مستوى 15</div>
-              </div>
-            </div>
-                         <div class="user-points">8 نقطة</div>
-           </div>
-           
-           <div class="leaderboard-item top-2">
-             <div class="rank">🥈</div>
-             <div class="user-info">
-               <div class="user-avatar">👤</div>
-               <div class="user-details">
-                 <div class="user-name">خالد علي</div>
-                 <div class="user-level">مستوى 2</div>
-               </div>
-             </div>
-             <div class="user-points">7 نقطة</div>
-           </div>
-           
-           <div class="leaderboard-item top-3">
-             <div class="rank">🥉</div>
-             <div class="user-info">
-               <div class="user-avatar">👤</div>
-               <div class="user-details">
-                 <div class="user-name">محمد حسن</div>
-                 <div class="user-level">مستوى 2</div>
-               </div>
-             </div>
-             <div class="user-points">6 نقطة</div>
-           </div>
-           
-           <div class="leaderboard-item">
-             <div class="rank">4</div>
-             <div class="user-info">
-               <div class="user-avatar">👤</div>
-               <div class="user-details">
-                 <div class="user-name">علي أحمد</div>
-                 <div class="user-level">مستوى 1</div>
-               </div>
-             </div>
-             <div class="user-points">5 نقطة</div>
-           </div>
-           
-           <div class="leaderboard-item">
-             <div class="rank">5</div>
-             <div class="user-info">
-               <div class="user-avatar">👤</div>
-               <div class="user-details">
-                 <div class="user-name">علي محمود</div>
-                 <div class="user-level">مستوى 1</div>
-               </div>
-             </div>
-             <div class="user-points">4 نقطة</div>
-          </div>
-        </div>
-        
-        <div class="my-rank">
-          <div class="my-rank-header">
-            <i data-lucide="user"></i> ترتيبك الحالي
-          </div>
-          <div class="my-rank-item">
-            <div class="rank">12</div>
-            <div class="user-info">
-              <div class="user-avatar">👤</div>
-              <div class="user-details">
-                <div class="user-name">أنت</div>
-                                 <div class="user-level">مستوى 1</div>
-              </div>
-            </div>
-                         <div class="user-points">3 نقطة</div>
-          </div>
-        </div>
-      </div>
-      
-    </div>
+     <h1 class="soon"> قريبا</h1>
   </div>
 </div>
 
 <script src="script.js"></script>
+<script>
+// قائمة الهبرغر
+const hamburger = document.getElementById('hamburger-menu');
+const sideMenu = document.getElementById('side-menu');
+hamburger.addEventListener('click', () => {
+  sideMenu.classList.toggle('hidden');
+});
+// إغلاق القائمة عند الضغط خارجها
+window.addEventListener('click', (e) => {
+  if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
+    sideMenu.classList.add('hidden');
+  }
+});
+// تفعيل الوضع الليلي من القائمة
+const toggleDarkMenu = document.getElementById('toggle-dark-menu');
+toggleDarkMenu.addEventListener('click', () => {
+  document.documentElement.classList.toggle('dark');
+  try {
+    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+  } catch (e) { console.warn('Storage not available'); }
+  sideMenu.classList.add('hidden');
+});
+</script>
 </body>
 </html>

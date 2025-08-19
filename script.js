@@ -1,4 +1,38 @@
-lucide.createIcons();
+try { lucide.createIcons(); } catch (e) { /* ignore if CDN not loaded */ }
+
+// تخزين محلي آمن
+function safeSet(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* تجاهل */ }
+}
+function safeGet(key, fallback = null) {
+  try {
+    const v = localStorage.getItem(key);
+    return v === null ? fallback : JSON.parse(v);
+  } catch (e) { return fallback; }
+}
+function todayKey() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+// حفظ شامل للتقدّم قبل إغلاق/تحديث الصفحة
+function persistAll() {
+  // القرآن
+  safeSet('quranProgress', quranProgress);
+  safeSet('quranCount', quranCount);
+  const sel = document.getElementById('quran-choice');
+  if (sel) safeSet('quranChoice', sel.value);
+
+  // الأذكار (يومي)
+  const dhikrKey = `dhikrCount:${todayKey()}`;
+  safeSet(dhikrKey, dhikrCount);
+
+  // الامتنان
+  const gInput = document.getElementById('gratitude-text');
+  if (gInput) safeSet('gratitudeText', gInput.value || '');
+}
 
 // التبديل بين التبويبات
 const tabWorship = document.getElementById("tab-worship");
@@ -20,11 +54,21 @@ tabWorship.addEventListener("click", () => switchTab(tabWorship, worshipSection)
 tabCommunity.addEventListener("click", () => switchTab(tabCommunity, communitySection));
 
 // الوضع الليلي مع تبديل الهلال والشمس
-const toggleBtn = document.getElementById("toggle-dark");
-toggleBtn.addEventListener("click", () => {
-  document.documentElement.classList.toggle("dark");
-  toggleBtn.textContent = document.documentElement.classList.contains("dark") ? "☀️" : "🌙";
+// تم حذف زر toggle-dark من الهيدر، لذا نحذف الكود التالي:
+// const toggleBtn = document.getElementById("toggle-dark");
+// toggleBtn.addEventListener("click", () => {
+//   document.documentElement.classList.toggle("dark");
+//   toggleBtn.textContent = document.documentElement.classList.contains("dark") ? "☀️" : "🌙";
+// });
+
+// تطبيق الوضع الليلي من التخزين عند التحميل (نسخة احتياطية لو لم يعمل سكربت head)
+document.addEventListener('DOMContentLoaded', () => {
+  const theme = safeGet('theme', null);
+  if (theme === 'dark') document.documentElement.classList.add('dark');
 });
+
+// حفظ عند محاولة إغلاق/تحديث الصفحة
+window.addEventListener('beforeunload', persistAll);
 
 // الساعة الحية
 function updateClock() {
@@ -73,6 +117,8 @@ async function fetchPrayerTimes() {
       Isha: "العشاء"
     };
     const now = new Date();
+    const completedKey = `completedPrayers:${todayKey()}`;
+    const completed = new Set(safeGet(completedKey, []));
     
     for (let key in names) {
       let [hour, minute] = times[key].split(":");
@@ -97,19 +143,29 @@ async function fetchPrayerTimes() {
       const btn = document.createElement("button");
       btn.className = "prayer-btn";
       btn.innerHTML = "🕌";
+      btn.dataset.prayerKey = key;
       
       if (now < prayerTime) {
         btn.disabled = true;
       }
-      
-             btn.addEventListener("click", () => {
-         btn.classList.add("done");
-         btn.innerHTML = "✅";
-         btn.disabled = true;
-         
-         // تحديث النقاط فوراً
-         updateLeaderboard();
-       });
+
+      // تطبيق الحالة المكتملة من التخزين
+      if (completed.has(key)) {
+        btn.classList.add("done");
+        btn.innerHTML = "✅";
+        btn.disabled = true;
+      }
+
+      btn.addEventListener("click", () => {
+        btn.classList.add("done");
+        btn.innerHTML = "✅";
+        btn.disabled = true;
+        // حفظ في التخزين لليوم الحالي
+        completed.add(key);
+        safeSet(completedKey, Array.from(completed));
+        // تحديث النقاط فوراً
+        updateLeaderboard();
+      });
       
       li.appendChild(span);
       li.appendChild(btn);
@@ -123,13 +179,39 @@ fetchPrayerTimes();
 
 // القرآن
 let quranProgress = 0;
+let quranCount = 0; // عدد مرات إنجاز الورد
 function updateQuranProgress() {
   const choice = document.getElementById("quran-choice").value;
-  let step = choice === "rubu" ? (2.5 / 604) * 100 : choice === "hizb" ? (10 / 604) * 100 : (20 / 604) * 100;
+  const completedFlag = !!safeGet('quranCompleted', false);
+
+  // إذا كان مكتملًا مسبقًا، ابدأ دورة جديدة من الصفر أولًا
+  if (completedFlag) {
+    quranProgress = 0;
+    safeSet('quranProgress', quranProgress);
+    safeSet('quranCompleted', false);
+  }
+
+  const step = choice === "rubu" ? (2.5 / 604) * 100 : choice === "hizb" ? (10 / 604) * 100 : (20 / 604) * 100;
   quranProgress += step;
   if (quranProgress > 100) quranProgress = 100;
   document.getElementById("quran-progress").style.width = quranProgress + "%";
-  
+
+  // حفظ التقدم والاختيار أولًا
+  safeSet('quranProgress', quranProgress);
+  safeSet('quranChoice', choice);
+
+  // في حال الاكتمال: ثبّت 100% واحسب إنجازًا واحدًا وخزّن راية الاكتمال
+  if (quranProgress >= 100) {
+    quranProgress = 100;
+    safeSet('quranProgress', quranProgress);
+    let cnt = safeGet('quranCount', quranCount);
+    cnt = (typeof cnt === 'number' ? cnt : 0) + 1;
+    quranCount = cnt;
+    safeSet('quranCount', quranCount);
+    safeSet('quranCompleted', true);
+    safeSet('quranCompletedAt', todayKey());
+  }
+
   // تحديث النقاط فوراً
   updateLeaderboard();
 }
@@ -141,6 +223,9 @@ function doneDhikr() {
   let percent = (dhikrCount / 3) * 100;
   if (percent > 100) percent = 100;
   document.getElementById("dhikr-progress").style.width = percent + "%";
+  // تخزين يومي للأذكار
+  const dhikrKey = `dhikrCount:${todayKey()}`;
+  safeSet(dhikrKey, dhikrCount);
   
   // تحديث النقاط فوراً
   updateLeaderboard();
@@ -150,6 +235,7 @@ function doneDhikr() {
 function saveGratitude() {
   const text = document.getElementById("gratitude-text").value;
   alert("تم الحفظ: " + text);
+  safeSet('gratitudeText', text);
   
   // تحديث النقاط فوراً
   updateLeaderboard();
@@ -162,6 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
     gratitudeText.addEventListener('input', function() {
       // تحديث النقاط عند الكتابة
       setTimeout(updateLeaderboard, 100);
+      safeSet('gratitudeText', gratitudeText.value);
     });
   }
 });
@@ -171,10 +258,14 @@ function updateCommunityStats() {
   const totalMembers = Math.floor(Math.random() * 500) + 1000;
   const dailyQuran = Math.floor(Math.random() * 200) + 400;
   const groupPrayers = Math.floor(Math.random() * 50) + 50;
-  
-  document.querySelectorAll('.stat-number')[0].textContent = totalMembers.toLocaleString();
-  document.querySelectorAll('.stat-number')[1].textContent = dailyQuran.toLocaleString();
-  document.querySelectorAll('.stat-number')[2].textContent = groupPrayers.toLocaleString();
+
+  // حارس: إذا لم تكن عناصر الإحصائيات موجودة في هذه الصفحة، لا تفعل شيئًا
+  const stats = document.querySelectorAll('.stat-number');
+  if (!stats || stats.length < 3) return;
+
+  stats[0].textContent = totalMembers.toLocaleString();
+  stats[1].textContent = dailyQuran.toLocaleString();
+  stats[2].textContent = groupPrayers.toLocaleString();
 }
 
 // تحديث الإحصائيات كل 30 ثانية
@@ -332,9 +423,7 @@ function calculateUserPoints() {
   let points = 0;
   
   // نقاط القرآن - نقطة واحدة لكل ورد مكتمل
-  if (quranProgress > 0) {
-    points += 1;
-  }
+  points += quranCount;
   
   // نقاط الأذكار - نقطة واحدة عند إكمال الأذكار الثلاثة
   if (dhikrCount >= 3) {
@@ -351,7 +440,7 @@ function calculateUserPoints() {
     points += 1;
   }
   
-  console.log(`النقاط المحسوبة: القرآن=${quranProgress > 0 ? 1 : 0}, الأذكار=${dhikrCount >= 3 ? 1 : 0}, الصلوات=${completedPrayers}, الامتنان=${gratitudeText && gratitudeText.value.trim() ? 1 : 0}`);
+  console.log(`النقاط المحسوبة: القرآن=${quranCount}, الأذكار=${dhikrCount >= 3 ? 1 : 0}, الصلوات=${completedPrayers}, الامتنان=${gratitudeText && gratitudeText.value.trim() ? 1 : 0}`);
   
   return Math.max(points, 1); // الحد الأدنى نقطة واحدة
 }
@@ -359,7 +448,50 @@ function calculateUserPoints() {
 // تحديث الترتيب كل دقيقة
 setInterval(updateLeaderboard, 60000);
 
-// تحديث النقاط عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', function() {
+// استرجاع الحالة (قرآن/أذكار/امتنان)
+function restoreState() {
+  // استرجاع القرآن
+  const savedQuranProgress = safeGet('quranProgress', 0);
+  const savedQuranCount = safeGet('quranCount', 0);
+  const savedQuranChoice = safeGet('quranChoice', null);
+  if (typeof savedQuranProgress === 'number') {
+    quranProgress = savedQuranProgress;
+    const bar = document.getElementById('quran-progress');
+    if (bar) bar.style.width = quranProgress + '%';
+  }
+  if (typeof savedQuranCount === 'number') {
+    quranCount = savedQuranCount;
+  }
+  const sel = document.getElementById('quran-choice');
+  if (sel) {
+    if (savedQuranChoice) sel.value = savedQuranChoice;
+    // حفظ الاختيار فور تغييره ليبقى بعد التحديث
+    sel.addEventListener('change', () => safeSet('quranChoice', sel.value));
+  }
+
+  // استرجاع الأذكار
+  const dhikrKey = `dhikrCount:${todayKey()}`;
+  const savedDhikr = safeGet(dhikrKey, 0);
+  if (typeof savedDhikr === 'number') {
+    dhikrCount = savedDhikr;
+    const percent = Math.min(100, (dhikrCount / 3) * 100);
+    const bar = document.getElementById('dhikr-progress');
+    if (bar) bar.style.width = percent + '%';
+  }
+
+  // استرجاع الامتنان
+  const savedGratitude = safeGet('gratitudeText', '');
+  const gInput = document.getElementById('gratitude-text');
+  if (gInput && typeof savedGratitude === 'string') {
+    gInput.value = savedGratitude;
+  }
+
   updateLeaderboard();
-});
+}
+
+// نفّذ الاسترجاع مباشرة إن كانت الصفحة جاهزة، وإلا انتظر DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', restoreState);
+} else {
+  restoreState();
+}
