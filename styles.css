@@ -4,6 +4,8 @@ html.dark body{background:#0f172a;color:#e2e8f0;}
 header{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.1);position:sticky;top:0;z-index:50;transition:0.5s;}
 html.dark header{background:#1e293b;}
 header h1{font-size:1.2rem;} /* عنوان أصغر */
+.app-logo{width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-left:0.4rem}
+@media (max-width:480px){.app-logo{width:28px;height:28px}}
 
 .header-controls {
   display: flex;
@@ -308,6 +310,20 @@ html.dark .community-subtitle {
   z-index: 1;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* زيادة المسافة بين بطاقات التحديات اليومية والأسبوعية */
+.community-content .card + .card {
+  margin-top: 1.75rem; /* كانت ضيقة، زدناها */
+}
+
+/* زيادة البادينق داخل بطاقات تبويب التحديات */
+.community-content .card {
+  padding: 1.5rem; /* بدلاً من 1rem الافتراضية */
+}
+
+@media (max-width: 480px) {
+  .community-content .card { padding: 1.25rem; }
 }
 
 /* تعديل ألوان الإحصائيات للتبويب */
@@ -625,11 +641,11 @@ html.dark .hamburger-btn span {
   left: 1rem; /* أقصى اليسار */
   right: auto;
   background: #fff;
-  border-radius: 1rem;
+  border-radius: .5rem;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-  padding: 1rem 1.5rem;
+  padding: 0.25rem;
   z-index: 1000;
-  min-width: 180px;
+  min-width: 150px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -651,10 +667,11 @@ html.dark .side-menu {
   font-size: 1.1rem;
   text-align: right;
   cursor: pointer;
-  padding: 0.5rem 0;
+  padding: 0.5rem 2rem; /* زيادة البادينق */
   border-radius: 0.5rem;
   transition: background 0.2s;
 }
+.side-menu-item .menu-logo{width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-left:0.5rem}
 .side-menu-item:hover {
   background: #f3f4f6;
 }
@@ -972,3 +989,120 @@ html.dark .side-menu-item:hover {
   }
 }
 
+/* ===== تحدياتي: قوائم وأزرار ===== */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.muted {
+  color: #6b7280;
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+html.dark .muted { color: #cbd5e1; }
+
+.challenge-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.challenge-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255,255,255,0.8);
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 0.5rem;
+}
+html.dark .challenge-item {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+}
+
+.challenge-check {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 2px solid #9ca3af; /* رمادي محايد */
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+}
+.challenge-check:hover { transform: translateY(-1px); }
+html.dark .challenge-check { background: #1e293b; border-color: #94a3b8; }
+.challenge-check::after {
+  /* علامة الصح تُرسم عند الحالة المكتملة فقط */
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 14px;
+  border-right: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.challenge-check.done {
+  background: #16a34a; /* أخضر */
+  border-color: #16a34a;
+}
+.challenge-check.done::after {
+  border-color: #fff; /* لون الصح */
+  opacity: 1;
+}
+
+.challenge-title { flex: 1; font-weight: 400; }
+
+/* ===== نافذة الإضافة (Modal) ===== */
+.modal { position: fixed; inset: 0; z-index: 1000; }
+.modal.hidden { display: none; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
+.modal-content {
+  position: relative;
+  width: min(520px, 92%);
+  margin: 10vh auto;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+html.dark .modal-content { background: #1e293b; color: #e2e8f0; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding: 1rem 1.25rem; border-bottom: 1px solid #e5e7eb; }
+html.dark .modal-header { border-color: rgba(255,255,255,0.12); }
+.modal-close { background:none; border:none; font-size:1.1rem; cursor:pointer; color:#6b7280; }
+html.dark .modal-close { color:#cbd5e1; }
+.modal-body { display:flex; flex-direction:column; gap:0.75rem; padding: 1rem 1.25rem; }
+.modal-body label { font-size: 0.9rem; color:#374151; }
+html.dark .modal-body label { color:#e2e8f0; }
+.modal-body input[type="text"], .modal-body select {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 0.6rem;
+  border: 2px solid #e5e7eb;
+  background: #fafafa;
+  display: block;
+  box-sizing: border-box;
+}
+/* اجعل حقل اسم التحدي أطول وأكثر وضوحاً */
+#challenge-title {
+  min-height: 3rem;
+  font-size: 1rem;
+  padding: 0.75rem 0.9rem;
+}
+html.dark .modal-body input[type="text"], html.dark .modal-body select { background:#334155; border-color:#475569; color:#e2e8f0; }
+.modal-footer { padding: 0.75rem 1.25rem 1.25rem; display:flex; justify-content:flex-end; }
+
+@media (max-width: 480px) {
+  .challenge-item { padding: 0.6rem 0.75rem; }
+  .challenge-check { width: 2.25rem; height: 2.25rem; }
+}

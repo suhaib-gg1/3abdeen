@@ -21,7 +21,7 @@
 <body>
 
 <header>
-  <h1>🌙 عابدين</h1>
+  <h1><img src="logo2.png" alt="شعار" class="app-logo"> عابدين</h1>
   <div class="header-controls">
     <div class="tabs">
       <button class="tab-btn active" id="tab-worship">
@@ -39,6 +39,29 @@
 </header>
 
 <div id="clock"></div>
+
+<!-- نافذة أذكار الصباح والمساء -->
+<div id="azkar-modal" class="modal hidden" aria-hidden="true">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 id="azkar-modal-title">أذكار الصباح</h3>
+      <button id="azkar-modal-close" class="modal-close">✖</button>
+    </div>
+    <div class="modal-body">
+      <div id="azkar-text" style="line-height:1.8"></div>
+      <div id="azkar-counter" class="muted">التكرار: <span id="azkar-remaining">1</span></div>
+    </div>
+    <div class="modal-footer" style="gap:0.5rem; justify-content:space-between;">
+      <div style="display:flex; gap:0.5rem;">
+        <button id="azkar-prev" class="btn">السابق</button>
+        <button id="azkar-next" class="btn btn-blue">التالي</button>
+      </div>
+      <button id="azkar-finish" class="btn btn-green">إنهاء</button>
+    </div>
+  </div>
+  
+</div>
 
 <div id="worship-section" class="content-section active">
   <main>
@@ -75,14 +98,14 @@
     <!-- الأذكار -->
     <div class="card">
       <button class="card-header" id="btn-azkar">
-        <span><i data-lucide="heart"></i> الأذكار (قريبًا)</span>
-       <!-- <i id="arrow-azkar" data-lucide="chevron-down"></i>
+        <span><i data-lucide="heart"></i> الأذكار</span>
+       <i id="arrow-azkar" data-lucide="chevron-down"></i>
       </button>
       <div id="azkar" class="card-content hidden">
-        <p>اذكر الله ٣ مرات:</p>
-        <button onclick="doneDhikr()" class="btn btn-blue">ذكرت</button>
+        <p class="text-sm">أذكار الصباح والمساء حسب الوقت</p>
+        <button id="btn-azkar-open" class="btn btn-blue">أذكار الصباح</button>
         <div class="progress-bar-bg"><div id="dhikr-progress" class="progress-bar-fill dhikr-fill" style="width:0%;"></div></div>
-      </div>-->
+      </div>
     </div>
 
     <!-- الامتنان -->
@@ -103,7 +126,82 @@
   <!-- تبويب التحديات -->
   <div class="community-tab">
     <div class="community-header">
-     <h1 class="soon"> قريبا</h1>
+      <h2>تحدياتي</h2>
+      <p class="community-subtitle">نظّم تحدياتك اليومية والأسبوعية، وتتبع إنجازاتك</p>
+    </div>
+    <div class="community-content">
+      <!-- بطاقات الإحصائيات -->
+      <div class="community-stats">
+        <div class="stat-item">
+          <div id="stat-week-completed" class="stat-number">0</div>
+          <div class="stat-label">التحديات المنجزة هذا الأسبوع</div>
+        </div>
+        <div class="stat-item">
+          <div id="stat-max-week" class="stat-number">0</div>
+          <div class="stat-label">أكبر عدد أُنجز في أسبوع</div>
+        </div>
+        <div class="stat-item">
+          <div id="stat-today-left" class="stat-number">0</div>
+          <div class="stat-label">الأيام المتبقية هذا الأسبوع</div>
+        </div>
+      </div>
+
+      <!-- التحديات اليومية -->
+      <div class="card">
+        <div class="section-header">
+          <h3>تحديات يومية</h3>
+          <button id="btn-add-daily" class="btn btn-blue">إضافة تحدي</button>
+        </div>
+        <div class="card-content">
+          <h4 class="muted">ثابتة</h4>
+          <ul id="daily-fixed-list" class="challenge-list"></ul>
+          <h4 class="muted">متغيرة اليوم</h4>
+          <ul id="daily-rotating-list" class="challenge-list"></ul>
+        </div>
+      </div>
+
+      <!-- التحديات الأسبوعية -->
+      <div class="card">
+        <div class="section-header">
+          <h3>تحديات أسبوعية</h3>
+          <button id="btn-add-weekly" class="btn btn-purple">إضافة تحدي</button>
+        </div>
+        <div class="card-content">
+          <h4 class="muted">ثابتة</h4>
+          <ul id="weekly-fixed-list" class="challenge-list"></ul>
+          <h4 class="muted">متغيرة هذا الأسبوع</h4>
+          <ul id="weekly-rotating-list" class="challenge-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة إضافة التحديات -->
+  <div id="challenge-modal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3>إضافة تحدي</h3>
+        <button id="modal-close" class="modal-close">✖</button>
+      </div>
+      <div class="modal-body">
+        <label>نوع التحدي</label>
+        <select id="challenge-scope">
+          <option value="daily">يومي</option>
+          <option value="weekly">أسبوعي</option>
+        </select>
+        <label>طريقة الظهور</label>
+        <select id="challenge-mode">
+          <option value="fixed">ثابت</option>
+          <option value="rotating">متغير</option>
+        </select>
+        <label>اسم التحدي</label>
+        <input id="challenge-title" type="text" placeholder="مثال: صلاة الوتر" />
+      </div>
+      <div class="modal-footer">
+        <button id="modal-save" class="btn btn-green">حفظ</button>
+      </div>
+    </div>
   </div>
 </div>
 
