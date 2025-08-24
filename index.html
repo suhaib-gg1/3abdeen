@@ -60,7 +60,47 @@
       <button id="azkar-finish" class="btn btn-green">إنهاء</button>
     </div>
   </div>
-  
+</div>
+
+<!-- نافذة الأذكار الجديدة -->
+<div id="dhikr-new-modal" class="modal hidden" aria-hidden="true">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 id="dhikr-new-title">تاج الذكر</h3>
+      <button id="dhikr-new-modal-close" class="modal-close">✖</button>
+    </div>
+    <div class="modal-body">
+      <div id="dhikr-new-text" style="line-height: 1.8; font-size: 1.1rem; text-align: center; margin: 1rem 0;"></div>
+      <div id="dhikr-new-counter" class="muted" style="text-align: center; font-size: 1rem;">التكرار: <span id="dhikr-new-remaining">1</span></div>
+    </div>
+    <div class="modal-footer" style="gap: 0.5rem; justify-content: space-between;">
+      <div style="display: flex; gap: 0.5rem;">
+        <button id="dhikr-new-prev" class="btn">السابق</button>
+        <button id="dhikr-new-next" class="btn btn-blue">التالي</button>
+      </div>
+      <button id="dhikr-new-finish" class="btn btn-green">إنهاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة قائمة الامتنانات -->
+<div id="gratitude-list-modal" class="modal hidden" aria-hidden="true">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3>قائمة الامتنانات</h3>
+      <button id="gratitude-list-modal-close" class="modal-close">✖</button>
+    </div>
+    <div class="modal-body">
+      <div id="gratitude-list-container">
+        <!-- سيتم ملء هذا القسم بالامتنانات المحفوظة -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="gratitude-list-close" class="btn">إغلاق</button>
+    </div>
+  </div>
 </div>
 
 <div id="worship-section" class="content-section active">
@@ -72,7 +112,6 @@
         <i id="arrow-salah" data-lucide="chevron-down"></i>
       </button>
       <div id="salah" class="card-content hidden">
-        <p class="text-sm">الأوقات اليومية من الإنترنت</p>
         <ul id="prayer-times"></ul>
       </div>
     </div>
@@ -102,9 +141,18 @@
        <i id="arrow-azkar" data-lucide="chevron-down"></i>
       </button>
       <div id="azkar" class="card-content hidden">
-        <p class="text-sm">أذكار الصباح والمساء حسب الوقت</p>
         <button id="btn-azkar-open" class="btn btn-blue">أذكار الصباح</button>
-        <div class="progress-bar-bg"><div id="dhikr-progress" class="progress-bar-fill dhikr-fill" style="width:0%;"></div></div>
+        <div class="progress-bar-bg"><div id="dhikr-progress" class="progress-bar-fill combined-fill" style="width:0%;"></div></div>
+        
+        <!-- قسم لا تسكت -->
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #2566e7;">
+          <p id="la-tasakt" style="text-align: center; font-weight: 700; color: #5c5c5c; margin-bottom: 1rem; font-size: 1.2rem;">لا تسكت</p>
+          <div style="display: flex; gap: 0.75rem;">
+            <button onclick="openDhikrModal('taj')" class="btn btn-green" style="flex: 1; text-align: center; font-size: 1rem; font-weight: 600;">تاج الذكر</button>
+            <button onclick="openDhikrModal('wudu')" class="btn btn-blue" style="flex: 1; text-align: center; font-size: 1rem; font-weight: 600;">بعد الوضوء</button>
+            <button onclick="openDhikrModal('subhan')" class="btn btn-purple" style="flex: 1; text-align: center; font-size: 1rem; font-weight: 600;">ولو كانت مثل زبد البحر</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -116,7 +164,10 @@
       </button>
       <div id="gratitude" class="card-content hidden">
         <textarea id="gratitude-text" placeholder="اكتب شيئا جميلا حدث اليوم"></textarea>
-        <button onclick="saveGratitude()" class="btn btn-purple">حفظ</button>
+        <div style="display: flex; gap: 0.75rem; margin-top: 0.75rem;">
+          <button onclick="saveGratitude()" class="btn btn-purple" style="flex: 1; padding: 0.75rem 1rem; font-size: 1rem;">حفظ</button>
+          <button onclick="showGratitudeList()" class="btn btn-blue" style="flex: 1; padding: 0.75rem 1rem; font-size: 1rem;">قائمة الامتنانات</button>
+        </div>
       </div>
     </div>
   </main>

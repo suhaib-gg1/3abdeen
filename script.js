@@ -259,19 +259,44 @@ function azkarPrev() {
 }
 
 function azkarFinish() {
-  // زيادة مرة واحدة لكل فترة (صباح/مساء) خلال يوم الفجر
+  // إذا كان المستخدم في نافذة أذكار المسجد (mosqueAzkarState.list && mosqueAzkarState.list.length > 0)
+  if (mosqueAzkarState.list && mosqueAzkarState.list.length > 0) {
+    const modal = document.getElementById('azkar-modal');
+    modal.classList.add('hidden');
+    const prayerKey = mosqueAzkarState.prayerKey;
+    const mosqueBtn = document.querySelector(`.mosque-btn[data-prayer-key="${prayerKey}"]`);
+    if (mosqueBtn) {
+      mosqueBtn.classList.add('done');
+      mosqueBtn.innerHTML = '✅';
+    }
+    const completedKey = `completedMosqueAzkar:${todayKey()}`;
+    const completed = new Set(safeGet(completedKey, []));
+    completed.add(prayerKey);
+    safeSet(completedKey, Array.from(completed));
+    console.log('تم إنهاء أذكار المسجد:', Array.from(completed));
+    updateCombinedProgress();
+    updateLeaderboard();
+    mosqueAzkarState = { list: [], index: 0, remain: 1, prayerKey: '' };
+    const title = document.getElementById('azkar-modal-title');
+    const period = currentPeriod();
+    title.textContent = period === 'morning' ? 'أذكار الصباح' : 'أذكار المساء';
+    return;
+  }
+
+  // إذا كان المستخدم في نافذة أذكار الصباح/المساء
   const period = azkarState.period || currentPeriod();
   const key = fajrDayKey();
   const flagKey = `dhikrDone:${period}:${key}`;
   if (!safeGet(flagKey, false)) {
     safeSet(flagKey, true);
-    // حدّث العداد والشريط
-    dhikrCount = getDhikrCountForActiveDay();
-    let percent = Math.min(100, (dhikrCount / 2) * 100);
-    const bar = document.getElementById('dhikr-progress');
-    if (bar) bar.style.width = percent + '%';
-    updateLeaderboard();
+    console.log('تم إنهاء أذكار الفترة:', period, 'المفتاح:', flagKey);
   }
+  // تحديث المتغير في الذاكرة
+  dhikrCount = getDhikrCountForActiveDay();
+  console.log('dhikrCount بعد الإنهاء:', dhikrCount);
+  // تحديث الشريط دائماً بعد محاولة الإنهاء
+  updateCombinedProgress();
+  updateLeaderboard();
   closeAzkarModal();
 }
 
@@ -340,7 +365,7 @@ const DEFAULT_CHALLENGES = {
       { id: 'd-r-36', title: 'تصفح موضوع علمي مفيد' },
       { id: 'd-r-37', title: 'قراءة فقرة من تفسير القرآن' },
       { id: 'd-r-38', title: 'مشاركة معلومة دينية' },
-      { id: 'd-r-39', title: 'ترديد “لا إله إلا الله وحده لا شريك له” 100 مرة' },
+      { id: 'd-r-39', title: 'ترديد "لا إله إلا الله وحده لا شريك له" 100 مرة' },
       { id: 'd-r-40', title: 'كتابة ملاحظة شكر لله' },
       { id: 'd-r-41', title: 'تذكر فضل اليوم' }
     ]
@@ -822,9 +847,31 @@ async function fetchPrayerTimes() {
         // تحديث تحدياتي لتنعكس حالة الصلاة
         try { renderChallenges(); } catch (_) {}
       });
+
+      // إضافة زر المسجد
+      const mosqueBtn = document.createElement("button");
+      mosqueBtn.className = "mosque-btn";
+      mosqueBtn.innerHTML = "📚";
+      mosqueBtn.title = "أذكار المسجد";
+      mosqueBtn.dataset.prayerKey = key;
+      mosqueBtn.dataset.prayerName = names[key];
+      
+      // التحقق من حالة الإنجاز المحفوظة
+      const completedMosqueKey = `completedMosqueAzkar:${todayKey()}`;
+      const completedMosque = new Set(safeGet(completedMosqueKey, []));
+      if (completedMosque.has(key)) {
+        mosqueBtn.classList.add("done");
+        mosqueBtn.innerHTML = "✅";
+        // لا نعطل الزر ليتمكن من إعادة فتح النافذة
+      }
+      
+      mosqueBtn.addEventListener("click", () => {
+        openMosqueModal(key, names[key]);
+      });
       
       li.appendChild(span);
       li.appendChild(btn);
+      li.appendChild(mosqueBtn);
       list.appendChild(li);
     }
     // تقدير فجر الغد لحدود فترة المساء
@@ -915,25 +962,55 @@ function scheduleFajrReset() {
 let dhikrCount = 0;
 function doneDhikr() {
   dhikrCount++;
-  let percent = (dhikrCount / 2) * 100;
-  if (percent > 100) percent = 100;
-  document.getElementById("dhikr-progress").style.width = percent + "%";
   // تخزين يومي للأذكار
   const dhikrKey = `dhikrCount:${fajrDayKey()}`;
   safeSet(dhikrKey, dhikrCount);
+  
+  // تحديث الشريط المشترك
+  updateCombinedProgress();
   
   // تحديث النقاط فوراً
   updateLeaderboard();
 }
 
-// الامتنان
+// الامتنان - النسخة المحسنة مع قائمة الامتنانات
 function saveGratitude() {
-  const text = document.getElementById("gratitude-text").value;
-  alert("تم الحفظ: " + text);
-  safeSet('gratitudeText', text);
+  const text = document.getElementById("gratitude-text").value.trim();
   
-  // تحديث النقاط فوراً
-  updateLeaderboard();
+  if (text) {
+    // حفظ في القائمة الجديدة
+    saveGratitudeToList(text);
+    
+    // الحفظ في النظام القديم (للتوافق)
+    safeSet('gratitudeText', text);
+    
+    // مسح النص من الحقل
+    document.getElementById("gratitude-text").value = '';
+    
+    // إظهار تأثير "تم الحفظ"
+    showSaveSuccess();
+    
+    // تحديث النقاط فوراً
+    updateLeaderboard();
+  }
+}
+
+// دالة إظهار تأثير نجاح الحفظ
+function showSaveSuccess() {
+  const saveBtn = document.querySelector('#gratitude .btn-purple');
+  if (saveBtn) {
+    const originalText = saveBtn.textContent;
+    
+    // إضافة كلاس النجاح
+    saveBtn.classList.add('success');
+    saveBtn.textContent = 'تم الحفظ ✓';
+    
+    // إزالة كلاس النجاح وإعادة النص الأصلي بعد ثانيتين
+    setTimeout(() => {
+      saveBtn.classList.remove('success');
+      saveBtn.textContent = originalText;
+    }, 2000);
+  }
 }
 
 // تحديث النقاط عند كتابة الامتنان
@@ -1132,15 +1209,47 @@ function calculateUserPoints() {
   const completedPrayers = document.querySelectorAll('.prayer-btn.done').length;
   points += completedPrayers;
   
+  // نقاط أذكار المسجد - نقطة واحدة لكل أذكار مسجد مكتملة
+  const completedMosqueKey = `completedMosqueAzkar:${todayKey()}`;
+  const completedMosque = safeGet(completedMosqueKey, []);
+  points += completedMosque.length;
+  
   // نقاط الامتنان - نقطة واحدة عند كتابة الامتنان
   const gratitudeText = document.getElementById('gratitude-text');
   if (gratitudeText && gratitudeText.value.trim()) {
     points += 1;
   }
   
-  console.log(`النقاط المحسوبة: القرآن=${quranCount}, الأذكار=${dhikrCount >= 2 ? 1 : 0}, الصلوات=${completedPrayers}, الامتنان=${gratitudeText && gratitudeText.value.trim() ? 1 : 0}`);
+  console.log(`النقاط المحسوبة: القرآن=${quranCount}, الأذكار=${dhikrCount >= 2 ? 1 : 0}, الصلوات=${completedPrayers}, أذكار المسجد=${completedMosque.length}, الامتنان=${gratitudeText && gratitudeText.value.trim() ? 1 : 0}`);
   
   return Math.max(points, 1); // الحد الأدنى نقطة واحدة
+}
+
+// تحديث شريط التقدم المشترك (أذكار الصباح/المساء + أذكار المسجد)
+function updateCombinedProgress() {
+  // عدد أذكار الصباح والمساء المكتملة (0-2)
+  const dhikrCount = getDhikrCountForActiveDay();
+  
+  // عدد أذكار المسجد المكتملة (0-5)
+  const completedMosqueKey = `completedMosqueAzkar:${todayKey()}`;
+  const completedMosque = safeGet(completedMosqueKey, []);
+  const mosqueCount = completedMosque.length;
+  
+  // إجمالي التقدم المشترك (من أصل 7)
+  // - أذكار الصباح والمساء: 2 نقطة
+  // - أذكار المسجد: 5 نقاط (كل صلاة = نقطة واحدة)
+  const totalProgress = dhikrCount + mosqueCount;
+  const percent = Math.min(100, (totalProgress / 7) * 100);
+  
+  // تحديث شريط التقدم المشترك
+  const bar = document.getElementById('dhikr-progress');
+  if (bar) {
+    bar.style.width = percent + '%';
+    // لون موحد للشريط المشترك
+    bar.className = 'progress-bar-fill combined-fill';
+  }
+  
+  console.log(`التقدم المشترك: ${totalProgress}/7 (${percent.toFixed(1)}%) - أذكار: ${dhikrCount}, مسجد: ${mosqueCount}`);
 }
 
 // تحديث الترتيب كل دقيقة
@@ -1169,11 +1278,6 @@ function restoreState() {
 
   // استرجاع الأذكار: احتسب من رايات الفترات لليوم حسب الفجر
   dhikrCount = getDhikrCountForActiveDay();
-  {
-    const percent = Math.min(100, (dhikrCount / 2) * 100);
-    const bar = document.getElementById('dhikr-progress');
-    if (bar) bar.style.width = percent + '%';
-  }
 
   // استرجاع الامتنان
   const savedGratitude = safeGet('gratitudeText', '');
@@ -1181,6 +1285,9 @@ function restoreState() {
   if (gInput && typeof savedGratitude === 'string') {
     gInput.value = savedGratitude;
   }
+
+  // تحديث الشريط المشترك
+  updateCombinedProgress();
 
   updateLeaderboard();
 }
@@ -1191,3 +1298,503 @@ if (document.readyState === 'loading') {
 } else {
   restoreState();
 }
+
+// =================== أذكار المسجد ===================
+const MOSQUE_AZKAR = {
+  Fajr: [
+    { text: 'أستغفر الله، أستغفر الله، أستغفر الله', repeat: 3 },
+    { text: 'اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. لا حول ولا قوة إلا بالله، لا إله إلا الله، ولا نعبد إلا إياه، له النعمة وله الفضل وله الثناء الحسن، لا إله إلا الله مخلصين له الدين ولو كره الكافرون.', repeat: 1 },
+    { text: 'اللهم لا مانع لما أعطيت، ولا معطي لما منعت، ولا ينفع ذا الجد منك الجد.', repeat: 1 },
+    { text: 'سبحان الله', repeat: 33 },
+    { text: 'الحمد لله', repeat: 33 },
+    { text: 'الله أكبر', repeat: 33 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد يحيي ويميت وهو على كل شيء قدير.', repeat: 10 },
+    { text: 'اللّهُ لا إِلَهَ إِلاّ هُوَ الْحَيّ الْقَيّومُ لا تَأْخُذُهُ سِنَةٌ وَلا نَوْمٌ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلاّ بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلاّ بِمَا شَاء وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ', repeat: 1 },
+    { text: 'سورة الإخلاص', repeat: 3 },
+    { text: 'سورة الفلق', repeat: 3 },
+    { text: 'سورة الناس', repeat: 3 }
+  ],
+  Dhuhr: [
+    { text: 'أستغفر الله، أستغفر الله، أستغفر الله', repeat: 3 },
+    { text: 'اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. لا حول ولا قوة إلا بالله، لا إله إلا الله، ولا نعبد إلا إياه، له النعمة وله الفضل وله الثناء الحسن، لا إله إلا الله مخلصين له الدين ولو كره الكافرون.', repeat: 1 },
+    { text: 'اللهم لا مانع لما أعطيت، ولا معطي لما منعت، ولا ينفع ذا الجد منك الجد.', repeat: 1 },
+    { text: 'سبحان الله', repeat: 33 },
+    { text: 'الحمد لله', repeat: 33 },
+    { text: 'الله أكبر', repeat: 33 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد يحيي ويميت وهو على كل شيء قدير.', repeat: 1 },
+    { text: 'اللّهُ لا إِلَهَ إِلاّ هُوَ الْحَيّ الْقَيّومُ لا تَأْخُذُهُ سِنَةٌ وَلا نَوْمٌ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلاّ بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلاّ بِمَا شَاء وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ', repeat: 1 },
+    { text: 'سورة الإخلاص', repeat: 1 },
+    { text: 'سورة الفلق', repeat: 1 },
+    { text: 'سورة الناس', repeat: 1 }
+  ],
+  Asr: [
+    { text: 'أستغفر الله، أستغفر الله، أستغفر الله', repeat: 3 },
+    { text: 'اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. لا حول ولا قوة إلا بالله، لا إله إلا الله، ولا نعبد إلا إياه، له النعمة وله الفضل وله الثناء الحسن، لا إله إلا الله مخلصين له الدين ولو كره الكافرون.', repeat: 1 },
+    { text: 'اللهم لا مانع لما أعطيت، ولا معطي لما منعت، ولا ينفع ذا الجد منك الجد.', repeat: 1 },
+    { text: 'سبحان الله', repeat: 33 },
+    { text: 'الحمد لله', repeat: 33 },
+    { text: 'الله أكبر', repeat: 33 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد يحيي ويميت وهو على كل شيء قدير.', repeat: 1 },
+    { text: 'اللّهُ لا إِلَهَ إِلاّ هُوَ الْحَيّ الْقَيّومُ لا تَأْخُذُهُ سِنَةٌ وَلا نَوْمٌ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلاّ بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلاّ بِمَا شَاء وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ', repeat: 1 },
+    { text: 'سورة الإخلاص', repeat: 1 },
+    { text: 'سورة الفلق', repeat: 1 },
+    { text: 'سورة الناس', repeat: 1 }
+  ],
+  Maghrib: [
+    { text: 'أستغفر الله، أستغفر الله، أستغفر الله', repeat: 3 },
+    { text: 'اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. لا حول ولا قوة إلا بالله، لا إله إلا الله، ولا نعبد إلا إياه، له النعمة وله الفضل وله الثناء الحسن، لا إله إلا الله مخلصين له الدين ولو كره الكافرون.', repeat: 1 },
+    { text: 'اللهم لا مانع لما أعطيت، ولا معطي لما منعت، ولا ينفع ذا الجد منك الجد.', repeat: 1 },
+    { text: 'سبحان الله', repeat: 33 },
+    { text: 'الحمد لله', repeat: 33 },
+    { text: 'الله أكبر', repeat: 33 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد يحيي ويميت وهو على كل شيء قدير.', repeat: 10 },
+    { text: 'اللّهُ لا إِلَهَ إِلاّ هُوَ الْحَيّ الْقَيّومُ لا تَأْخُذُهُ سِنَةٌ وَلا نَوْمٌ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلاّ بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلاّ بِمَا شَاء وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ', repeat: 1 },
+    { text: 'سورة الإخلاص', repeat: 3 },
+    { text: 'سورة الفلق', repeat: 3 },
+    { text: 'سورة الناس', repeat: 3 }
+  ],
+  Isha: [
+    { text: 'أستغفر الله، أستغفر الله، أستغفر الله', repeat: 3 },
+    { text: 'اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. لا حول ولا قوة إلا بالله، لا إله إلا الله، ولا نعبد إلا إياه، له النعمة وله الفضل وله الثناء الحسن، لا إله إلا الله مخلصين له الدين ولو كره الكافرون.', repeat: 1 },
+    { text: 'اللهم لا مانع لما أعطيت، ولا معطي لما منعت، ولا ينفع ذا الجد منك الجد.', repeat: 1 },
+    { text: 'سبحان الله', repeat: 33 },
+    { text: 'الحمد لله', repeat: 33 },
+    { text: 'الله أكبر', repeat: 33 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد يحيي ويميت وهو على كل شيء قدير.', repeat: 1 },
+    { text: 'اللّهُ لا إِلَهَ إِلاّ هُوَ الْحَيّ الْقَيّومُ لا تَأْخُذُهُ سِنَةٌ وَلا نَوْمٌ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلاّ بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلاّ بِمَا شَاء وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ', repeat: 1 },
+    { text: 'سورة الإخلاص', repeat: 1 },
+    { text: 'سورة الفلق', repeat: 1 },
+    { text: 'سورة الناس', repeat: 1 }
+  ]
+};
+
+let mosqueAzkarState = { list: [], index: 0, remain: 1, prayerKey: '' };
+
+function openMosqueModal(prayerKey, prayerName) {
+  const azkarList = MOSQUE_AZKAR[prayerKey] || [];
+  if (azkarList.length === 0) {
+    alert('لا توجد أذكار متاحة لهذه الصلاة');
+    return;
+  }
+
+  mosqueAzkarState = {
+    list: azkarList,
+    index: 0,
+    remain: azkarList[0].repeat,
+    prayerKey: prayerKey
+  };
+
+  // تحديث عنوان النافذة
+  const title = document.getElementById('azkar-modal-title');
+  title.textContent = `أذكار المسجد - ${prayerName}`;
+
+  // عرض الذكر الأول
+  showMosqueAzkar();
+
+  // فتح النافذة
+  const modal = document.getElementById('azkar-modal');
+  modal.classList.remove('hidden');
+}
+
+function showMosqueAzkar() {
+  const { list, index, remain, prayerKey } = mosqueAzkarState;
+  if (index >= list.length) {
+    // انتهت الأذكار
+    const modal = document.getElementById('azkar-modal');
+    modal.classList.add('hidden');
+    return;
+  }
+
+  const azkar = list[index];
+  const textElement = document.getElementById('azkar-text');
+  const remainingElement = document.getElementById('azkar-remaining');
+  const titleElement = document.getElementById('azkar-modal-title');
+  
+  textElement.textContent = azkar.text;
+  remainingElement.textContent = remain;
+  
+  // الحفاظ على عنوان النافذة كما هو
+  const prayerNames = {
+    Fajr: "الفجر",
+    Dhuhr: "الظهر", 
+    Asr: "العصر",
+    Maghrib: "المغرب",
+    Isha: "العشاء"
+  };
+  if (titleElement && prayerKey) {
+    titleElement.textContent = `أذكار المسجد - ${prayerNames[prayerKey]}`;
+  }
+
+  // تحديث حالة الأزرار
+  const prevBtn = document.getElementById('azkar-prev');
+  const nextBtn = document.getElementById('azkar-next');
+  const finishBtn = document.getElementById('azkar-finish');
+
+  prevBtn.disabled = index === 0;
+  nextBtn.disabled = index >= list.length - 1 && remain <= 1; // معطل فقط في آخر ذكر وآخر تكرار
+  finishBtn.disabled = false;
+}
+
+// تعديل الدوال الأصلية للعمل مع أذكار المسجد
+const originalAzkarNext = azkarNext;
+const originalAzkarPrev = azkarPrev;
+const originalAzkarFinish = azkarFinish;
+
+// إعادة تعريف دالة azkarNext
+function azkarNext() {
+  if (mosqueAzkarState.list.length > 0) {
+    // أذكار المسجد
+    mosqueAzkarState.remain--;
+    if (mosqueAzkarState.remain <= 0) {
+      mosqueAzkarState.index++;
+      if (mosqueAzkarState.index < mosqueAzkarState.list.length) {
+        mosqueAzkarState.remain = mosqueAzkarState.list[mosqueAzkarState.index].repeat;
+      }
+    }
+    showMosqueAzkar();
+  } else {
+    // أذكار الصباح والمساء (الكود الأصلي)
+    if (azkarState.remain > 1) {
+      azkarState.remain -= 1;
+    } else if (azkarState.index < azkarState.list.length - 1) {
+      azkarState.index += 1;
+      azkarState.remain = azkarState.list[azkarState.index].repeat || 1;
+    }
+    updateAzkarView();
+  }
+}
+
+// إعادة تعريف دالة azkarPrev
+function azkarPrev() {
+  if (mosqueAzkarState.list.length > 0) {
+    // أذكار المسجد
+    if (mosqueAzkarState.remain < mosqueAzkarState.list[mosqueAzkarState.index].repeat) {
+      mosqueAzkarState.remain++;
+    } else if (mosqueAzkarState.index > 0) {
+      mosqueAzkarState.index--;
+      mosqueAzkarState.remain = mosqueAzkarState.list[mosqueAzkarState.index].repeat;
+    }
+    showMosqueAzkar();
+  } else {
+    // أذكار الصباح والمساء (الكود الأصلي)
+    if (azkarState.index > 0) {
+      azkarState.index -= 1;
+      azkarState.remain = azkarState.list[azkarState.index].repeat || 1;
+      updateAzkarView();
+    }
+  }
+}
+
+// إعادة تعريف دالة azkarFinish
+function azkarFinish() {
+  if (mosqueAzkarState.list.length > 0) {
+    // أذكار المسجد
+    const modal = document.getElementById('azkar-modal');
+    modal.classList.add('hidden');
+    
+    // تغيير حالة الزر إلى مكتمل (بدون تعطيل)
+    const prayerKey = mosqueAzkarState.prayerKey;
+    const mosqueBtn = document.querySelector(`.mosque-btn[data-prayer-key="${prayerKey}"]`);
+    if (mosqueBtn) {
+      mosqueBtn.classList.add('done');
+      mosqueBtn.innerHTML = '✅';
+      // لا نعطل الزر ليتمكن من إعادة فتح النافذة
+    }
+    
+    // حفظ حالة الإنجاز في التخزين
+    const completedKey = `completedMosqueAzkar:${todayKey()}`;
+    const completed = new Set(safeGet(completedKey, []));
+    completed.add(prayerKey);
+    safeSet(completedKey, Array.from(completed));
+    
+    // تحديث الشريط المشترك
+    updateCombinedProgress();
+    
+    // تحديث النقاط
+    updateLeaderboard();
+    
+    // إعادة تعيين حالة أذكار المسجد
+    mosqueAzkarState = { list: [], index: 0, remain: 1, prayerKey: '' };
+    
+    // إعادة تعيين عنوان النافذة حسب الفترة الحالية
+    const title = document.getElementById('azkar-modal-title');
+    const period = currentPeriod();
+    title.textContent = period === 'morning' ? 'أذكار الصباح' : 'أذكار المساء';
+  } else {
+    // أذكار الصباح والمساء (الكود الأصلي)
+    const period = azkarState.period || currentPeriod();
+    const key = fajrDayKey();
+    const flagKey = `dhikrDone:${period}:${key}`;
+    if (!safeGet(flagKey, false)) {
+      safeSet(flagKey, true);
+      // تحديث الشريط المشترك
+      updateCombinedProgress();
+      updateLeaderboard();
+    }
+    closeAzkarModal();
+  }
+}
+
+// وظائف إدارة قائمة الامتنانات
+function showGratitudeList() {
+  const modal = document.getElementById('gratitude-list-modal');
+  const container = document.getElementById('gratitude-list-container');
+  
+  // جلب جميع الامتنانات المحفوظة
+  const gratitudeList = getGratitudeList();
+  
+  if (gratitudeList.length === 0) {
+    container.innerHTML = '<p style="text-align: center; color: #666; margin: 2rem 0;">لا توجد امتنانات محفوظة بعد</p>';
+  } else {
+    let html = '<div style="max-height: 400px; overflow-y: auto;">';
+    
+    gratitudeList.forEach((item, index) => {
+      const date = new Date(item.date);
+      const dateStr = date.toLocaleDateString('ar-SA', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
+      });
+      
+      html += `
+        <div class="gratitude-item">
+          <div class="gratitude-header">
+            <small class="gratitude-date">${dateStr}</small>
+            <button onclick="deleteGratitude(${index})" class="gratitude-delete-btn">حذف</button>
+          </div>
+          <p class="gratitude-text">${item.text}</p>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+  }
+  
+  modal.classList.remove('hidden');
+}
+
+function getGratitudeList() {
+  try {
+    const saved = localStorage.getItem('gratitudeList');
+    return saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    console.warn('خطأ في قراءة قائمة الامتنانات:', e);
+    return [];
+  }
+}
+
+function saveGratitudeToList(text) {
+  try {
+    const list = getGratitudeList();
+    const newItem = {
+      text: text,
+      date: new Date().toISOString()
+    };
+    list.unshift(newItem); // إضافة في البداية
+    
+    // الاحتفاظ بآخر 50 امتنان فقط
+    if (list.length > 50) {
+      list.splice(50);
+    }
+    
+    localStorage.setItem('gratitudeList', JSON.stringify(list));
+  } catch (e) {
+    console.warn('خطأ في حفظ الامتنان:', e);
+  }
+}
+
+function deleteGratitude(index) {
+  try {
+    const list = getGratitudeList();
+    list.splice(index, 1);
+    localStorage.setItem('gratitudeList', JSON.stringify(list));
+    
+    // إعادة عرض القائمة
+    showGratitudeList();
+  } catch (e) {
+    console.warn('خطأ في حذف الامتنان:', e);
+  }
+}
+
+// إضافة مستمعي الأحداث لنافذة قائمة الامتنانات
+document.addEventListener('DOMContentLoaded', function() {
+  const gratitudeListModal = document.getElementById('gratitude-list-modal');
+  const gratitudeListModalClose = document.getElementById('gratitude-list-modal-close');
+  const gratitudeListClose = document.getElementById('gratitude-list-close');
+  const modalBackdrop = gratitudeListModal?.querySelector('.modal-backdrop');
+  
+  // إغلاق النافذة
+  function closeGratitudeListModal() {
+    gratitudeListModal.classList.add('hidden');
+  }
+  
+  if (gratitudeListModalClose) {
+    gratitudeListModalClose.addEventListener('click', closeGratitudeListModal);
+  }
+  
+  if (gratitudeListClose) {
+    gratitudeListClose.addEventListener('click', closeGratitudeListModal);
+  }
+  
+  if (modalBackdrop) {
+    modalBackdrop.addEventListener('click', closeGratitudeListModal);
+  }
+});
+
+// ===== الأذكار الجديدة - لا تسكت =====
+
+// بيانات الأذكار الجديدة
+const newDhikrData = {
+  taj: {
+    title: 'تاج الذكر',
+    text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير',
+    repeat: 10
+  },
+  wudu: {
+    title: 'بعد الوضوء',
+    text: 'أشهد أن لا إله إلا الله وحده لا شريك له، وأشهد أن محمداً عبدُه ورسوله، اللهم اجعلني من التَّوابين، واجعلني من المتطهِّرين',
+    repeat: 1
+  },
+  subhan: {
+    title: 'ولو كانت مثل زبد البحر',
+    text: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
+    repeat: 100
+  }
+};
+
+// حالة الأذكار الجديدة
+let newDhikrState = {
+  current: null,
+  remaining: 1,
+  completed: 0
+};
+
+// دالة فتح نافذة الأذكار الجديدة
+function openDhikrModal(type) {
+  const dhikr = newDhikrData[type];
+  if (!dhikr) return;
+  
+  // تعيين الحالة
+  newDhikrState.current = type;
+  newDhikrState.remaining = dhikr.repeat;
+  newDhikrState.completed = 0;
+  
+  // تحديث النافذة
+  const modal = document.getElementById('dhikr-new-modal');
+  const title = document.getElementById('dhikr-new-title');
+  const text = document.getElementById('dhikr-new-text');
+  const remaining = document.getElementById('dhikr-new-remaining');
+  
+  title.textContent = dhikr.title;
+  text.textContent = dhikr.text;
+  remaining.textContent = newDhikrState.remaining;
+  
+  // إظهار النافذة
+  modal.classList.remove('hidden');
+}
+
+// دالة التالي للأذكار الجديدة
+function newDhikrNext() {
+  if (newDhikrState.remaining > 1) {
+    newDhikrState.remaining--;
+    newDhikrState.completed++;
+    updateNewDhikrView();
+  } else {
+    // انتهى التكرار
+    newDhikrFinish();
+  }
+}
+
+// دالة السابق للأذكار الجديدة
+function newDhikrPrev() {
+  if (newDhikrState.completed > 0) {
+    newDhikrState.remaining++;
+    newDhikrState.completed--;
+    updateNewDhikrView();
+  }
+}
+
+// دالة تحديث عرض الأذكار الجديدة
+function updateNewDhikrView() {
+  const remaining = document.getElementById('dhikr-new-remaining');
+  if (remaining) {
+    remaining.textContent = newDhikrState.remaining;
+  }
+}
+
+// دالة إنهاء الأذكار الجديدة
+function newDhikrFinish() {
+  const modal = document.getElementById('dhikr-new-modal');
+  modal.classList.add('hidden');
+  
+  // حفظ الإنجاز
+  const today = todayKey();
+  const key = `newDhikrCompleted:${newDhikrState.current}:${today}`;
+  safeSet(key, true);
+  
+  // تحديث النقاط
+  updateLeaderboard();
+  
+  // إعادة تعيين الحالة
+  newDhikrState = {
+    current: null,
+    remaining: 1,
+    completed: 0
+  };
+}
+
+// إضافة مستمعي الأحداث لنافذة الأذكار الجديدة
+document.addEventListener('DOMContentLoaded', function() {
+  const newDhikrModal = document.getElementById('dhikr-new-modal');
+  const newDhikrModalClose = document.getElementById('dhikr-new-modal-close');
+  const newDhikrPrevBtn = document.getElementById('dhikr-new-prev');
+  const newDhikrNextBtn = document.getElementById('dhikr-new-next');
+  const newDhikrFinishBtn = document.getElementById('dhikr-new-finish');
+  const modalBackdrop = newDhikrModal?.querySelector('.modal-backdrop');
+  
+  // إغلاق النافذة
+  function closeNewDhikrModal() {
+    newDhikrModal.classList.add('hidden');
+  }
+  
+  if (newDhikrModalClose) {
+    newDhikrModalClose.addEventListener('click', closeNewDhikrModal);
+  }
+  
+  if (newDhikrFinishBtn) {
+    newDhikrFinishBtn.addEventListener('click', newDhikrFinish);
+  }
+  
+  if (newDhikrNextBtn) {
+    newDhikrNextBtn.addEventListener('click', newDhikrNext);
+  }
+  
+  if (newDhikrPrevBtn) {
+    newDhikrPrevBtn.addEventListener('click', newDhikrPrev);
+  }
+  
+  if (modalBackdrop) {
+    modalBackdrop.addEventListener('click', closeNewDhikrModal);
+  }
+  
+  // إضافة مستمع للضغط على Enter للانتقال
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !newDhikrModal.classList.contains('hidden')) {
+      newDhikrNext();
+    }
+  });
+});
+
+

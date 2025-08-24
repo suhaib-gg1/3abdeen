@@ -173,6 +173,8 @@ html.dark .progress-bar-bg{background:#475569;}
 .progress-bar-fill{height:100%;border-radius:9999px;transition:width 0.3s ease;}
 .quran-fill{background:linear-gradient(90deg,#16a34a,#15803d);}
 .dhikr-fill{background:linear-gradient(90deg,#2563eb,#1d4ed8);}
+.mosque-fill{background:linear-gradient(90deg,#8b5cf6,#7c3aed);}
+.combined-fill{background:linear-gradient(90deg,#3b82f6,#8b5cf6);}
 
 .btn{padding:0.4rem 0.8rem;border-radius:0.5rem;color:#fff;border:none;font-size:0.9rem;cursor:pointer;transition:0.3s;min-height:2.5rem;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
 .btn:hover{transform:translateY(-1px);box-shadow:0 4px 8px rgba(0,0,0,0.15);}
@@ -180,6 +182,28 @@ html.dark .progress-bar-bg{background:#475569;}
 .btn-blue{background:linear-gradient(135deg,#2563eb,#1d4ed8);}
 .btn-purple{background:linear-gradient(135deg,#7c3aed,#6d28d9);}
 .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* تنسيقات خاصة لزر السابق في نافذة الأذكار */
+#azkar-prev {
+  background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+  color: #ffffff !important;
+}
+
+#azkar-prev:hover {
+  background: linear-gradient(135deg, #4b5563, #374151) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+html.dark #azkar-prev {
+  background: linear-gradient(135deg, #9ca3af, #6b7280) !important;
+  color: #1f2937 !important;
+}
+
+html.dark #azkar-prev:hover {
+  background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+  color: #ffffff !important;
+}
 
 .text-sm{font-size:0.75rem;color:#6b7280;}
 html.dark .text-sm{color:#cbd5e1;} 
@@ -194,6 +218,14 @@ html.dark #clock{color:#e2e8f0;}
 .prayer-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(59,130,246,0.4);}
 .prayer-btn:disabled{background:linear-gradient(135deg,#9ca3af,#6b7280);cursor:not-allowed;transform:none;box-shadow:none;}
 .prayer-btn.done{background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 2px 8px rgba(22,163,74,0.3);}
+
+/* تصميم زر المسجد */
+.mosque-btn{
+  width:2.5rem;height:2.5rem;border-radius:0.75rem;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:0.3s;flex-shrink:0;box-shadow:0 2px 8px rgba(59,130,246,0.3);margin-right:0.5rem;
+}
+.mosque-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(59,130,246,0.4);}
+.mosque-btn:disabled{background:linear-gradient(135deg,#9ca3af,#6b7280);cursor:not-allowed;transform:none;box-shadow:none;}
+.mosque-btn.done{background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 2px 8px rgba(22,163,74,0.3);}
 
 /* تصميم قسم المجتمع */
 .community-stats {
@@ -1079,8 +1111,23 @@ html.dark .challenge-check { background: #1e293b; border-color: #94a3b8; }
 html.dark .modal-content { background: #1e293b; color: #e2e8f0; }
 .modal-header { display:flex; align-items:center; justify-content:space-between; padding: 1rem 1.25rem; border-bottom: 1px solid #e5e7eb; }
 html.dark .modal-header { border-color: rgba(255,255,255,0.12); }
-.modal-close { background:none; border:none; font-size:1.1rem; cursor:pointer; color:#6b7280; }
-html.dark .modal-close { color:#cbd5e1; }
+.modal-close { 
+  background: none; 
+  border: none; 
+  font-size: 1.1rem; 
+  cursor: pointer; 
+  color: #6b7280; 
+  transition: color 0.3s ease;
+}
+.modal-close:hover { 
+  color: #374151; 
+}
+html.dark .modal-close { 
+  color: #cbd5e1; 
+}
+html.dark .modal-close:hover { 
+  color: #f9fafb; 
+}
 .modal-body { display:flex; flex-direction:column; gap:0.75rem; padding: 1rem 1.25rem; }
 .modal-body label { font-size: 0.9rem; color:#374151; }
 html.dark .modal-body label { color:#e2e8f0; }
@@ -1105,4 +1152,400 @@ html.dark .modal-body input[type="text"], html.dark .modal-body select { backgro
 @media (max-width: 480px) {
   .challenge-item { padding: 0.6rem 0.75rem; }
   .challenge-check { width: 2.25rem; height: 2.25rem; }
+}
+
+/* ===== تنسيقات قائمة الامتنانات ===== */
+#gratitude-list-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+#gratitude-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+#gratitude-list-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+html.dark #gratitude-list-container::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+#gratitude-list-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+html.dark #gratitude-list-container::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+#gratitude-list-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+html.dark #gratitude-list-container::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.gratitude-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #f9f9f9;
+  transition: all 0.2s ease;
+}
+
+html.dark .gratitude-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.gratitude-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+html.dark .gratitude-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.gratitude-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.gratitude-date {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+html.dark .gratitude-date {
+  color: #9ca3af;
+}
+
+.gratitude-delete-btn {
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.gratitude-delete-btn:hover {
+  background: #ff0000;
+}
+
+/* تنسيقات خاصة لزر الإغلاق في نافذة قائمة الامتنانات */
+#gratitude-list-close {
+  background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+  color: #ffffff !important;
+}
+
+#gratitude-list-close:hover {
+  background: linear-gradient(135deg, #4b5563, #374151) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+html.dark #gratitude-list-close {
+  background: linear-gradient(135deg, #9ca3af, #6b7280) !important;
+  color: #1f2937 !important;
+}
+
+html.dark #gratitude-list-close:hover {
+  background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+  color: #ffffff !important;
+}
+
+/* تنسيقات خاصة لزر الإغلاق في نافذة التحديات */
+#modal-close {
+  background: none !important;
+  border: none !important;
+  font-size: 1.1rem !important;
+  cursor: pointer !important;
+  color: #6b7280 !important;
+  transition: color 0.3s ease !important;
+}
+
+#modal-close:hover {
+  color: #374151 !important;
+}
+
+html.dark #modal-close {
+  color: #cbd5e1 !important;
+}
+
+html.dark #modal-close:hover {
+  color: #f9fafb !important;
+}
+
+/* تنسيقات خاصة لزر الإغلاق في نافذة الأذكار */
+#azkar-modal-close {
+  background: none !important;
+  border: none !important;
+  font-size: 1.1rem !important;
+  cursor: pointer !important;
+  color: #6b7280 !important;
+  transition: color 0.3s ease !important;
+}
+
+#azkar-modal-close:hover {
+  color: #374151 !important;
+}
+
+html.dark #azkar-modal-close {
+  color: #cbd5e1 !important;
+}
+
+html.dark #azkar-modal-close:hover {
+  color: #f9fafb !important;
+}
+
+/* تنسيقات قسم لا تسكت */
+#azkar .card-content > div:last-child {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+html.dark #azkar .card-content > div:last-child {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+#azkar .card-content > div:last-child > p {
+  text-align: center;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+/* تنسيق خاص لكلمة "لا تسكت" في الوضع العادي */
+#la-tasakt {
+  color: #1f2937 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+html.dark #azkar .card-content > div:last-child > p {
+  color: #e2e8f0;
+}
+
+/* تنسيق خاص لكلمة "لا تسكت" في الوضع الليلي */
+html.dark #la-tasakt {
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgb(255, 255, 255);
+  animation: glow 2s ease-in-out infinite alternate;
+  font-weight: 800 !important;
+  letter-spacing: 1px;
+  background: rgb(255, 255, 255);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+  }
+  to {
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.6), 0 0 30px rgba(251, 191, 36, 0.4);
+  }
+}
+
+/* تنسيق التعليق التوضيحي لشريط التقدم المشترك */
+#azkar .card-content small {
+  color: #6b7280;
+  font-size: 0.8rem;
+  text-align: center;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+html.dark #azkar .card-content small {
+  color: #9ca3af;
+}
+
+#azkar .card-content > div:last-child > div {
+  display: flex;
+  gap: 0.75rem;
+}
+
+#azkar .card-content > div:last-child .btn {
+  flex: 1;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  min-height: 2.75rem;
+  transition: all 0.3s ease;
+}
+
+#azkar .card-content > div:last-child .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+html.dark #azkar .card-content > div:last-child .btn:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* تنسيقات responsive لقسم لا تسكت */
+@media (max-width: 768px) {
+  #azkar .card-content > div:last-child > div {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  #azkar .card-content > div:last-child .btn {
+    flex: none;
+    font-size: 0.95rem;
+    padding: 0.7rem 1rem;
+    min-height: 2.5rem;
+  }
+  
+  #azkar .card-content > div:last-child > p {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* تنسيقات responsive لكلمة "لا تسكت" في الوضع الليلي */
+  html.dark #la-tasakt {
+    font-size: 1.1rem !important;
+    letter-spacing: 0.8px;
+  }
+}
+
+@media (max-width: 480px) {
+  #azkar .card-content > div:last-child .btn {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.8rem;
+    min-height: 2.25rem;
+  }
+  
+  #azkar .card-content > div:last-child > p {
+    font-size: 1rem;
+  }
+  
+  /* تنسيقات responsive لكلمة "لا تسكت" في الوضع الليلي */
+  html.dark #la-tasakt {
+    font-size: 1rem !important;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* تنسيقات خاصة لزر الإغلاق في نافذة الأذكار الجديدة */
+#dhikr-new-modal-close {
+  background: none !important;
+  border: none !important;
+  font-size: 1.1rem !important;
+  cursor: pointer !important;
+  color: #6b7280 !important;
+  transition: color 0.3s ease !important;
+}
+
+#dhikr-new-modal-close:hover {
+  color: #374151 !important;
+}
+
+html.dark #dhikr-new-modal-close {
+  color: #cbd5e1 !important;
+}
+
+html.dark #dhikr-new-modal-close:hover {
+  color: #f9fafb !important;
+}
+
+/* تنسيقات خاصة لزر السابق في نافذة الأذكار الجديدة */
+#dhikr-new-prev {
+  background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+  color: #ffffff !important;
+}
+
+#dhikr-new-prev:hover {
+  background: linear-gradient(135deg, #4b5563, #374151) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+html.dark #dhikr-new-prev {
+  background: linear-gradient(135deg, #9ca3af, #6b7280) !important;
+  color: #1f2937 !important;
+}
+
+html.dark #dhikr-new-prev:hover {
+  background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+  color: #ffffff !important;
+}
+
+.gratitude-text {
+  margin: 0;
+  line-height: 1.6;
+  color: #333;
+}
+
+html.dark .gratitude-text {
+  color: #e2e8f0;
+}
+
+/* تحسين مظهر الأزرار في بطاقة الامتنان */
+#gratitude .card-content > div {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+#gratitude .card-content > div .btn {
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+#gratitude .card-content > div .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#gratitude .card-content > div .btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+html.dark #gratitude .card-content > div .btn:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+html.dark #gratitude .card-content > div .btn:active {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* تأثير النجاح للحفظ */
+#gratitude .btn-purple.success {
+  background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+  color: white !important;
+  animation: successPulse 0.6s ease;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
