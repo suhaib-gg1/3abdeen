@@ -259,44 +259,17 @@ function azkarPrev() {
 }
 
 function azkarFinish() {
-  // إذا كان المستخدم في نافذة أذكار المسجد (mosqueAzkarState.list && mosqueAzkarState.list.length > 0)
-  if (mosqueAzkarState.list && mosqueAzkarState.list.length > 0) {
-    const modal = document.getElementById('azkar-modal');
-    modal.classList.add('hidden');
-    const prayerKey = mosqueAzkarState.prayerKey;
-    const mosqueBtn = document.querySelector(`.mosque-btn[data-prayer-key="${prayerKey}"]`);
-    if (mosqueBtn) {
-      mosqueBtn.classList.add('done');
-      mosqueBtn.innerHTML = '✅';
-    }
-    const completedKey = `completedMosqueAzkar:${todayKey()}`;
-    const completed = new Set(safeGet(completedKey, []));
-    completed.add(prayerKey);
-    safeSet(completedKey, Array.from(completed));
-    console.log('تم إنهاء أذكار المسجد:', Array.from(completed));
-    updateCombinedProgress();
-    updateLeaderboard();
-    mosqueAzkarState = { list: [], index: 0, remain: 1, prayerKey: '' };
-    const title = document.getElementById('azkar-modal-title');
-    const period = currentPeriod();
-    title.textContent = period === 'morning' ? 'أذكار الصباح' : 'أذكار المساء';
-    return;
-  }
-
-  // إذا كان المستخدم في نافذة أذكار الصباح/المساء
+  // زيادة مرة واحدة لكل فترة (صباح/مساء) خلال يوم الفجر
   const period = azkarState.period || currentPeriod();
   const key = fajrDayKey();
   const flagKey = `dhikrDone:${period}:${key}`;
-  if (!safeGet(flagKey, false)) {
-    safeSet(flagKey, true);
-    console.log('تم إنهاء أذكار الفترة:', period, 'المفتاح:', flagKey);
-  }
-  // تحديث المتغير في الذاكرة
-  dhikrCount = getDhikrCountForActiveDay();
-  console.log('dhikrCount بعد الإنهاء:', dhikrCount);
-  // تحديث الشريط دائماً بعد محاولة الإنهاء
-  updateCombinedProgress();
-  updateLeaderboard();
+      if (!safeGet(flagKey, false)) {
+      safeSet(flagKey, true);
+      // حدّث العداد والشريط المشترك
+      dhikrCount = getDhikrCountForActiveDay();
+      updateCombinedProgress();
+      updateLeaderboard();
+    }
   closeAzkarModal();
 }
 
@@ -883,6 +856,8 @@ async function fetchPrayerTimes() {
     setAzkarButtonLabel();
     // جدولة إعادة ضبط الواجهة عند فجر الغد
     scheduleFajrReset();
+    // تحديث الشريط المشترك بعد تحميل مواقيت الصلاة
+    updateCombinedProgress();
   } catch (e) {
     console.error(e);
   }
@@ -973,44 +948,14 @@ function doneDhikr() {
   updateLeaderboard();
 }
 
-// الامتنان - النسخة المحسنة مع قائمة الامتنانات
+// الامتنان
 function saveGratitude() {
-  const text = document.getElementById("gratitude-text").value.trim();
+  const text = document.getElementById("gratitude-text").value;
+  alert("تم الحفظ: " + text);
+  safeSet('gratitudeText', text);
   
-  if (text) {
-    // حفظ في القائمة الجديدة
-    saveGratitudeToList(text);
-    
-    // الحفظ في النظام القديم (للتوافق)
-    safeSet('gratitudeText', text);
-    
-    // مسح النص من الحقل
-    document.getElementById("gratitude-text").value = '';
-    
-    // إظهار تأثير "تم الحفظ"
-    showSaveSuccess();
-    
-    // تحديث النقاط فوراً
-    updateLeaderboard();
-  }
-}
-
-// دالة إظهار تأثير نجاح الحفظ
-function showSaveSuccess() {
-  const saveBtn = document.querySelector('#gratitude .btn-purple');
-  if (saveBtn) {
-    const originalText = saveBtn.textContent;
-    
-    // إضافة كلاس النجاح
-    saveBtn.classList.add('success');
-    saveBtn.textContent = 'تم الحفظ ✓';
-    
-    // إزالة كلاس النجاح وإعادة النص الأصلي بعد ثانيتين
-    setTimeout(() => {
-      saveBtn.classList.remove('success');
-      saveBtn.textContent = originalText;
-    }, 2000);
-  }
+  // تحديث النقاط فوراً
+  updateLeaderboard();
 }
 
 // تحديث النقاط عند كتابة الامتنان
@@ -1230,26 +1175,27 @@ function updateCombinedProgress() {
   // عدد أذكار الصباح والمساء المكتملة (0-2)
   const dhikrCount = getDhikrCountForActiveDay();
   
-  // عدد أذكار المسجد المكتملة (0-5)
-  const completedMosqueKey = `completedMosqueAzkar:${todayKey()}`;
+  // عدد أذكار المسجد المكتملة (0-5) - نستخدم fajrDayKey بدلاً من todayKey
+  const completedMosqueKey = `completedMosqueAzkar:${fajrDayKey()}`;
   const completedMosque = safeGet(completedMosqueKey, []);
   const mosqueCount = completedMosque.length;
   
-  // إجمالي التقدم المشترك (من أصل 7)
-  // - أذكار الصباح والمساء: 2 نقطة
-  // - أذكار المسجد: 5 نقاط (كل صلاة = نقطة واحدة)
+  // إجمالي التقدم (من أصل 7) - تقدم مندمج
   const totalProgress = dhikrCount + mosqueCount;
   const percent = Math.min(100, (totalProgress / 7) * 100);
   
-  // تحديث شريط التقدم المشترك
+  console.log(`تحديث الشريط المشترك: أذكار=${dhikrCount}, مسجد=${mosqueCount}, إجمالي=${totalProgress}, نسبة=${percent}%`);
+  
+  // تحديث شريط التقدم
   const bar = document.getElementById('dhikr-progress');
   if (bar) {
     bar.style.width = percent + '%';
     // لون موحد للشريط المشترك
     bar.className = 'progress-bar-fill combined-fill';
+    console.log(`تم تحديث الشريط إلى ${percent}%`);
+  } else {
+    console.log('لم يتم العثور على عنصر الشريط');
   }
-  
-  console.log(`التقدم المشترك: ${totalProgress}/7 (${percent.toFixed(1)}%) - أذكار: ${dhikrCount}, مسجد: ${mosqueCount}`);
 }
 
 // تحديث الترتيب كل دقيقة
@@ -1294,9 +1240,13 @@ function restoreState() {
 
 // نفّذ الاسترجاع مباشرة إن كانت الصفحة جاهزة، وإلا انتظر DOMContentLoaded
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', restoreState);
+  document.addEventListener('DOMContentLoaded', () => {
+    // انتظر قليلاً لضمان تحميل مواقيت الصلاة
+    setTimeout(restoreState, 1000);
+  });
 } else {
-  restoreState();
+  // انتظر قليلاً لضمان تحميل مواقيت الصلاة
+  setTimeout(restoreState, 1000);
 }
 
 // =================== أذكار المسجد ===================
@@ -1494,307 +1444,5 @@ function azkarPrev() {
     }
   }
 }
-
-// إعادة تعريف دالة azkarFinish
-function azkarFinish() {
-  if (mosqueAzkarState.list.length > 0) {
-    // أذكار المسجد
-    const modal = document.getElementById('azkar-modal');
-    modal.classList.add('hidden');
-    
-    // تغيير حالة الزر إلى مكتمل (بدون تعطيل)
-    const prayerKey = mosqueAzkarState.prayerKey;
-    const mosqueBtn = document.querySelector(`.mosque-btn[data-prayer-key="${prayerKey}"]`);
-    if (mosqueBtn) {
-      mosqueBtn.classList.add('done');
-      mosqueBtn.innerHTML = '✅';
-      // لا نعطل الزر ليتمكن من إعادة فتح النافذة
-    }
-    
-    // حفظ حالة الإنجاز في التخزين
-    const completedKey = `completedMosqueAzkar:${todayKey()}`;
-    const completed = new Set(safeGet(completedKey, []));
-    completed.add(prayerKey);
-    safeSet(completedKey, Array.from(completed));
-    
-    // تحديث الشريط المشترك
-    updateCombinedProgress();
-    
-    // تحديث النقاط
-    updateLeaderboard();
-    
-    // إعادة تعيين حالة أذكار المسجد
-    mosqueAzkarState = { list: [], index: 0, remain: 1, prayerKey: '' };
-    
-    // إعادة تعيين عنوان النافذة حسب الفترة الحالية
-    const title = document.getElementById('azkar-modal-title');
-    const period = currentPeriod();
-    title.textContent = period === 'morning' ? 'أذكار الصباح' : 'أذكار المساء';
-  } else {
-    // أذكار الصباح والمساء (الكود الأصلي)
-    const period = azkarState.period || currentPeriod();
-    const key = fajrDayKey();
-    const flagKey = `dhikrDone:${period}:${key}`;
-    if (!safeGet(flagKey, false)) {
-      safeSet(flagKey, true);
-      // تحديث الشريط المشترك
-      updateCombinedProgress();
-      updateLeaderboard();
-    }
-    closeAzkarModal();
-  }
-}
-
-// وظائف إدارة قائمة الامتنانات
-function showGratitudeList() {
-  const modal = document.getElementById('gratitude-list-modal');
-  const container = document.getElementById('gratitude-list-container');
-  
-  // جلب جميع الامتنانات المحفوظة
-  const gratitudeList = getGratitudeList();
-  
-  if (gratitudeList.length === 0) {
-    container.innerHTML = '<p style="text-align: center; color: #666; margin: 2rem 0;">لا توجد امتنانات محفوظة بعد</p>';
-  } else {
-    let html = '<div style="max-height: 400px; overflow-y: auto;">';
-    
-    gratitudeList.forEach((item, index) => {
-      const date = new Date(item.date);
-      const dateStr = date.toLocaleDateString('ar-SA', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        weekday: 'long'
-      });
-      
-      html += `
-        <div class="gratitude-item">
-          <div class="gratitude-header">
-            <small class="gratitude-date">${dateStr}</small>
-            <button onclick="deleteGratitude(${index})" class="gratitude-delete-btn">حذف</button>
-          </div>
-          <p class="gratitude-text">${item.text}</p>
-        </div>
-      `;
-    });
-    
-    html += '</div>';
-    container.innerHTML = html;
-  }
-  
-  modal.classList.remove('hidden');
-}
-
-function getGratitudeList() {
-  try {
-    const saved = localStorage.getItem('gratitudeList');
-    return saved ? JSON.parse(saved) : [];
-  } catch (e) {
-    console.warn('خطأ في قراءة قائمة الامتنانات:', e);
-    return [];
-  }
-}
-
-function saveGratitudeToList(text) {
-  try {
-    const list = getGratitudeList();
-    const newItem = {
-      text: text,
-      date: new Date().toISOString()
-    };
-    list.unshift(newItem); // إضافة في البداية
-    
-    // الاحتفاظ بآخر 50 امتنان فقط
-    if (list.length > 50) {
-      list.splice(50);
-    }
-    
-    localStorage.setItem('gratitudeList', JSON.stringify(list));
-  } catch (e) {
-    console.warn('خطأ في حفظ الامتنان:', e);
-  }
-}
-
-function deleteGratitude(index) {
-  try {
-    const list = getGratitudeList();
-    list.splice(index, 1);
-    localStorage.setItem('gratitudeList', JSON.stringify(list));
-    
-    // إعادة عرض القائمة
-    showGratitudeList();
-  } catch (e) {
-    console.warn('خطأ في حذف الامتنان:', e);
-  }
-}
-
-// إضافة مستمعي الأحداث لنافذة قائمة الامتنانات
-document.addEventListener('DOMContentLoaded', function() {
-  const gratitudeListModal = document.getElementById('gratitude-list-modal');
-  const gratitudeListModalClose = document.getElementById('gratitude-list-modal-close');
-  const gratitudeListClose = document.getElementById('gratitude-list-close');
-  const modalBackdrop = gratitudeListModal?.querySelector('.modal-backdrop');
-  
-  // إغلاق النافذة
-  function closeGratitudeListModal() {
-    gratitudeListModal.classList.add('hidden');
-  }
-  
-  if (gratitudeListModalClose) {
-    gratitudeListModalClose.addEventListener('click', closeGratitudeListModal);
-  }
-  
-  if (gratitudeListClose) {
-    gratitudeListClose.addEventListener('click', closeGratitudeListModal);
-  }
-  
-  if (modalBackdrop) {
-    modalBackdrop.addEventListener('click', closeGratitudeListModal);
-  }
-});
-
-// ===== الأذكار الجديدة - لا تسكت =====
-
-// بيانات الأذكار الجديدة
-const newDhikrData = {
-  taj: {
-    title: 'تاج الذكر',
-    text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير',
-    repeat: 10
-  },
-  wudu: {
-    title: 'بعد الوضوء',
-    text: 'أشهد أن لا إله إلا الله وحده لا شريك له، وأشهد أن محمداً عبدُه ورسوله، اللهم اجعلني من التَّوابين، واجعلني من المتطهِّرين',
-    repeat: 1
-  },
-  subhan: {
-    title: 'ولو كانت مثل زبد البحر',
-    text: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
-    repeat: 100
-  }
-};
-
-// حالة الأذكار الجديدة
-let newDhikrState = {
-  current: null,
-  remaining: 1,
-  completed: 0
-};
-
-// دالة فتح نافذة الأذكار الجديدة
-function openDhikrModal(type) {
-  const dhikr = newDhikrData[type];
-  if (!dhikr) return;
-  
-  // تعيين الحالة
-  newDhikrState.current = type;
-  newDhikrState.remaining = dhikr.repeat;
-  newDhikrState.completed = 0;
-  
-  // تحديث النافذة
-  const modal = document.getElementById('dhikr-new-modal');
-  const title = document.getElementById('dhikr-new-title');
-  const text = document.getElementById('dhikr-new-text');
-  const remaining = document.getElementById('dhikr-new-remaining');
-  
-  title.textContent = dhikr.title;
-  text.textContent = dhikr.text;
-  remaining.textContent = newDhikrState.remaining;
-  
-  // إظهار النافذة
-  modal.classList.remove('hidden');
-}
-
-// دالة التالي للأذكار الجديدة
-function newDhikrNext() {
-  if (newDhikrState.remaining > 1) {
-    newDhikrState.remaining--;
-    newDhikrState.completed++;
-    updateNewDhikrView();
-  } else {
-    // انتهى التكرار
-    newDhikrFinish();
-  }
-}
-
-// دالة السابق للأذكار الجديدة
-function newDhikrPrev() {
-  if (newDhikrState.completed > 0) {
-    newDhikrState.remaining++;
-    newDhikrState.completed--;
-    updateNewDhikrView();
-  }
-}
-
-// دالة تحديث عرض الأذكار الجديدة
-function updateNewDhikrView() {
-  const remaining = document.getElementById('dhikr-new-remaining');
-  if (remaining) {
-    remaining.textContent = newDhikrState.remaining;
-  }
-}
-
-// دالة إنهاء الأذكار الجديدة
-function newDhikrFinish() {
-  const modal = document.getElementById('dhikr-new-modal');
-  modal.classList.add('hidden');
-  
-  // حفظ الإنجاز
-  const today = todayKey();
-  const key = `newDhikrCompleted:${newDhikrState.current}:${today}`;
-  safeSet(key, true);
-  
-  // تحديث النقاط
-  updateLeaderboard();
-  
-  // إعادة تعيين الحالة
-  newDhikrState = {
-    current: null,
-    remaining: 1,
-    completed: 0
-  };
-}
-
-// إضافة مستمعي الأحداث لنافذة الأذكار الجديدة
-document.addEventListener('DOMContentLoaded', function() {
-  const newDhikrModal = document.getElementById('dhikr-new-modal');
-  const newDhikrModalClose = document.getElementById('dhikr-new-modal-close');
-  const newDhikrPrevBtn = document.getElementById('dhikr-new-prev');
-  const newDhikrNextBtn = document.getElementById('dhikr-new-next');
-  const newDhikrFinishBtn = document.getElementById('dhikr-new-finish');
-  const modalBackdrop = newDhikrModal?.querySelector('.modal-backdrop');
-  
-  // إغلاق النافذة
-  function closeNewDhikrModal() {
-    newDhikrModal.classList.add('hidden');
-  }
-  
-  if (newDhikrModalClose) {
-    newDhikrModalClose.addEventListener('click', closeNewDhikrModal);
-  }
-  
-  if (newDhikrFinishBtn) {
-    newDhikrFinishBtn.addEventListener('click', newDhikrFinish);
-  }
-  
-  if (newDhikrNextBtn) {
-    newDhikrNextBtn.addEventListener('click', newDhikrNext);
-  }
-  
-  if (newDhikrPrevBtn) {
-    newDhikrPrevBtn.addEventListener('click', newDhikrPrev);
-  }
-  
-  if (modalBackdrop) {
-    modalBackdrop.addEventListener('click', closeNewDhikrModal);
-  }
-  
-  // إضافة مستمع للضغط على Enter للانتقال
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !newDhikrModal.classList.contains('hidden')) {
-      newDhikrNext();
-    }
-  });
-});
 
 
