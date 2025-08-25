@@ -223,6 +223,14 @@ function closeAzkarModal() {
   if (!modal) return;
   modal.classList.add('hidden');
   modal.setAttribute('aria-hidden', 'true');
+  
+  // إعادة تعيين حالة أذكار المسجد عند إغلاق النافذة لضمان عدم التداخل
+  if (mosqueAzkarState.list.length > 0) {
+    mosqueAzkarState.list = [];
+    mosqueAzkarState.index = 0;
+    mosqueAzkarState.remain = 1;
+    mosqueAzkarState.prayerKey = '';
+  }
 }
 
 function updateAzkarView() {
@@ -746,6 +754,19 @@ document.addEventListener('DOMContentLoaded', () => {
   if (azkarPrevBtn) azkarPrevBtn.addEventListener('click', azkarPrev);
   if (azkarFinishBtn) azkarFinishBtn.addEventListener('click', azkarFinish);
   setAzkarButtonLabel();
+
+  // أذكار "لا تسكت"
+  const dhikrNewClose = document.getElementById('dhikr-new-modal-close');
+  const dhikrNewBackdrop = document.querySelector('#dhikr-new-modal .modal-backdrop');
+  const dhikrNewNextBtn = document.getElementById('dhikr-new-next');
+  const dhikrNewPrevBtn = document.getElementById('dhikr-new-prev');
+  const dhikrNewFinishBtn = document.getElementById('dhikr-new-finish');
+
+  if (dhikrNewClose) dhikrNewClose.addEventListener('click', closeDhikrNewModal);
+  if (dhikrNewBackdrop) dhikrNewBackdrop.addEventListener('click', closeDhikrNewModal);
+  if (dhikrNewNextBtn) dhikrNewNextBtn.addEventListener('click', dhikrNewNext);
+  if (dhikrNewPrevBtn) dhikrNewPrevBtn.addEventListener('click', dhikrNewPrev);
+  if (dhikrNewFinishBtn) dhikrNewFinishBtn.addEventListener('click', dhikrNewFinish);
 });
 
 // مواقيت الصلاة مع زر المسجد الجديد
@@ -1249,7 +1270,107 @@ if (document.readyState === 'loading') {
   setTimeout(restoreState, 1000);
 }
 
+
+// =================== أذكار "لا تسكت" ===================
+const DHIKR_TYPES = {
+  taj: {
+    title: 'تاج الذكر',
+    items: [
+      { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير', repeat: 100 }
+    ]
+  },
+  wudu: {
+    title: 'بعد الوضوء',
+    items: [
+      { text: 'أشهد أن لا إله إلا الله وحده لا شريك له وأشهد أن محمداً عبده ورسوله', repeat: 1 }
+    ]
+  },
+  subhan: {
+    title: 'ولو كانت مثل زبد البحر',
+    items: [
+      { text: 'سبحان الله وبحمده', repeat: 100 }
+    ]
+  }
+};
+
+let dhikrNewState = { type: null, list: [], index: 0, remain: 1 };
+
+function openDhikrModal(dhikrType) {
+  const dhikr = DHIKR_TYPES[dhikrType];
+  if (!dhikr) return;
+
+  dhikrNewState = {
+    type: dhikrType,
+    list: dhikr.items,
+    index: 0,
+    remain: dhikr.items[0]?.repeat || 1
+  };
+
+  const modal = document.getElementById('dhikr-new-modal');
+  const titleEl = document.getElementById('dhikr-new-title');
+
+  if (titleEl) titleEl.textContent = dhikr.title;
+
+  updateDhikrNewView();
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeDhikrNewModal() {
+  const modal = document.getElementById('dhikr-new-modal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+}
+
+function updateDhikrNewView() {
+  const item = dhikrNewState.list[dhikrNewState.index];
+  const textEl = document.getElementById('dhikr-new-text');
+  const remEl = document.getElementById('dhikr-new-remaining');
+
+  if (textEl) textEl.textContent = item ? item.text : '';
+  if (remEl) remEl.textContent = String(dhikrNewState.remain || 1);
+
+  const prev = document.getElementById('dhikr-new-prev');
+  const next = document.getElementById('dhikr-new-next');
+  if (prev) prev.disabled = dhikrNewState.index === 0 && dhikrNewState.remain === (item?.repeat || 1);
+  if (next) next.disabled = dhikrNewState.index >= dhikrNewState.list.length - 1 && dhikrNewState.remain <= 1;
+}
+
+function dhikrNewNext() {
+  if (dhikrNewState.remain > 1) {
+    dhikrNewState.remain -= 1;
+  } else if (dhikrNewState.index < dhikrNewState.list.length - 1) {
+    dhikrNewState.index += 1;
+    dhikrNewState.remain = dhikrNewState.list[dhikrNewState.index].repeat || 1;
+  }
+  updateDhikrNewView();
+}
+
+function dhikrNewPrev() {
+    const currentRepeat = dhikrNewState.list[dhikrNewState.index].repeat || 1;
+    if (dhikrNewState.remain < currentRepeat) {
+        dhikrNewState.remain += 1;
+    } else if (dhikrNewState.index > 0) {
+        dhikrNewState.index -= 1;
+        dhikrNewState.remain = dhikrNewState.list[dhikrNewState.index].repeat || 1;
+    }
+    updateDhikrNewView();
+}
+
+
+function dhikrNewFinish() {
+  const { type } = dhikrNewState;
+  if (type) {
+    const key = `dhikrNewDone:${type}:${todayKey()}`;
+    safeSet(key, true);
+    // You can add points or other logic here if needed
+  }
+  closeDhikrNewModal();
+}
+
 // =================== أذكار المسجد ===================
+
 const MOSQUE_AZKAR = {
   Fajr: [
     { text: 'أستغفر الله، أستغفر الله، أستغفر الله', repeat: 3 },
@@ -1395,25 +1516,23 @@ function showMosqueAzkar() {
   finishBtn.disabled = false;
 }
 
-// تعديل الدوال الأصلية للعمل مع أذكار المسجد
-const originalAzkarNext = azkarNext;
-const originalAzkarPrev = azkarPrev;
-const originalAzkarFinish = azkarFinish;
+// --- توحيد منطق الأذكار ---
 
-// إعادة تعريف دالة azkarNext
+// يتم استدعاء هذه الدوال من خلال أزرار النافذة المنبثقة
+// وهي تحدد تلقائيًا ما إذا كانت أذكار الصباح/المساء أو أذكار المسجد نشطة
+
 function azkarNext() {
-  if (mosqueAzkarState.list.length > 0) {
-    // أذكار المسجد
-    mosqueAzkarState.remain--;
-    if (mosqueAzkarState.remain <= 0) {
+  // التحقق إذا كانت نافذة أذكار المسجد هي النشطة
+  if (mosqueAzkarState.list.length > 0 && mosqueAzkarState.prayerKey) {
+    if (mosqueAzkarState.remain > 1) {
+      mosqueAzkarState.remain--;
+    } else if (mosqueAzkarState.index < mosqueAzkarState.list.length - 1) {
       mosqueAzkarState.index++;
-      if (mosqueAzkarState.index < mosqueAzkarState.list.length) {
-        mosqueAzkarState.remain = mosqueAzkarState.list[mosqueAzkarState.index].repeat;
-      }
+      mosqueAzkarState.remain = mosqueAzkarState.list[mosqueAzkarState.index].repeat || 1;
     }
     showMosqueAzkar();
   } else {
-    // أذكار الصباح والمساء (الكود الأصلي)
+    // وإلا، فهي أذكار الصباح/المساء
     if (azkarState.remain > 1) {
       azkarState.remain -= 1;
     } else if (azkarState.index < azkarState.list.length - 1) {
@@ -1424,24 +1543,65 @@ function azkarNext() {
   }
 }
 
-// إعادة تعريف دالة azkarPrev
 function azkarPrev() {
-  if (mosqueAzkarState.list.length > 0) {
-    // أذكار المسجد
-    if (mosqueAzkarState.remain < mosqueAzkarState.list[mosqueAzkarState.index].repeat) {
+  // التحقق إذا كانت نافذة أذكار المسجد هي النشطة
+  if (mosqueAzkarState.list.length > 0 && mosqueAzkarState.prayerKey) {
+    if (mosqueAzkarState.remain < (mosqueAzkarState.list[mosqueAzkarState.index].repeat || 1)) {
       mosqueAzkarState.remain++;
     } else if (mosqueAzkarState.index > 0) {
       mosqueAzkarState.index--;
-      mosqueAzkarState.remain = mosqueAzkarState.list[mosqueAzkarState.index].repeat;
+      mosqueAzkarState.remain = mosqueAzkarState.list[mosqueAzkarState.index].repeat || 1;
     }
     showMosqueAzkar();
   } else {
-    // أذكار الصباح والمساء (الكود الأصلي)
+    // وإلا، فهي أذكار الصباح/المساء
     if (azkarState.index > 0) {
       azkarState.index -= 1;
       azkarState.remain = azkarState.list[azkarState.index].repeat || 1;
       updateAzkarView();
     }
+  }
+}
+
+function azkarFinish() {
+  // التحقق إذا كانت نافذة أذكار المسجد هي النشطة
+  if (mosqueAzkarState.list.length > 0 && mosqueAzkarState.prayerKey) {
+    const { prayerKey } = mosqueAzkarState;
+    const completedKey = `completedMosqueAzkar:${todayKey()}`;
+    const completed = new Set(safeGet(completedKey, []));
+
+    if (!completed.has(prayerKey)) {
+      completed.add(prayerKey);
+      safeSet(completedKey, Array.from(completed));
+
+      // تحديث زر المسجد في قائمة الصلوات ليعرض علامة الصح
+      const mosqueBtn = document.querySelector(`.mosque-btn[data-prayer-key="${prayerKey}"]`);
+      if (mosqueBtn) {
+        mosqueBtn.classList.add("done");
+        mosqueBtn.innerHTML = "✅";
+      }
+
+      // تحديث شريط التقدم والنقاط
+      updateCombinedProgress();
+      updateLeaderboard();
+    }
+    
+    closeAzkarModal();
+
+  } else {
+    // وإلا، فهي أذكار الصباح/المساء
+    const period = azkarState.period || currentPeriod();
+    const key = fajrDayKey();
+    const flagKey = `dhikrDone:${period}:${key}`;
+    
+    if (!safeGet(flagKey, false)) {
+      safeSet(flagKey, true);
+      dhikrCount = getDhikrCountForActiveDay();
+      updateCombinedProgress();
+      updateLeaderboard();
+    }
+    
+    closeAzkarModal();
   }
 }
 
