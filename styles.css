@@ -1458,6 +1458,57 @@ html.dark .gratitude-text {
 }
 
 /* تحسين مظهر الأزرار في بطاقة الامتنان */
+/* لا تسكت Section */
+.dhikr-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2566e7;
+
+}
+
+html.dark .dhikr-section {
+  border-top-color: #3b82f6;
+}
+
+.dhikr-title {
+  text-align: center;
+  font-weight: 800; /* Increased from 700 to 800 for bolder text */
+  color: #131313;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-family: inherit; /* Ensures the bold weight is applied correctly */
+}
+
+html.dark .dhikr-title {
+  color: #e2e8f0;
+}
+
+.dhikr-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.dhikr-buttons .btn {
+  flex: 1;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem;
+  min-height: auto;
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 480px) {
+  .dhikr-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .dhikr-buttons .btn {
+    width: 100%;
+  }
+}
+
 #gratitude .card-content > div {
   display: flex;
   gap: 0.75rem;
