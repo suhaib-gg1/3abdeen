@@ -201,7 +201,7 @@
       <div class="card">
         <div class="section-header">
           <h3>تحديات يومية</h3>
-          <button id="btn-add-daily" class="btn btn-blue">إضافة تحدي</button>
+          <button id="btn-add-daily" class="btn btn-blue">تعديل</button>
         </div>
         <div class="card-content">
           <h4 class="muted">ثابتة</h4>
@@ -215,7 +215,7 @@
       <div class="card">
         <div class="section-header">
           <h3>تحديات أسبوعية</h3>
-          <button id="btn-add-weekly" class="btn btn-purple">إضافة تحدي</button>
+          <button id="btn-add-weekly" class="btn btn-purple">تعديل</button>
         </div>
         <div class="card-content">
           <h4 class="muted">ثابتة</h4>
@@ -232,22 +232,34 @@
     <div class="modal-backdrop"></div>
     <div class="modal-content" role="dialog" aria-modal="true">
       <div class="modal-header">
-        <h3>إضافة تحدي</h3>
+        <h3>تعديل التحديات</h3>
         <button id="modal-close" class="modal-close">✖</button>
       </div>
       <div class="modal-body">
-        <label>نوع التحدي</label>
-        <select id="challenge-scope">
-          <option value="daily">يومي</option>
-          <option value="weekly">أسبوعي</option>
-        </select>
-        <label>طريقة الظهور</label>
-        <select id="challenge-mode">
-          <option value="fixed">ثابت</option>
-          <option value="rotating">متغير</option>
-        </select>
-        <label>اسم التحدي</label>
-        <input id="challenge-title" type="text" placeholder="مثال: صلاة الوتر" />
+        <div class="tabs">
+          <button class="tab-btn active" id="tab-add-challenge">إضافة تحدي</button>
+          <button class="tab-btn" id="tab-view-challenges">عرض وحذف التحديات</button>
+        </div>
+
+        <div id="add-challenge-section" class="content-section active">
+          <label>نوع التحدي</label>
+          <select id="challenge-scope">
+            <option value="daily">يومي</option>
+            <option value="weekly">أسبوعي</option>
+          </select>
+          <label>طريقة الظهور</label>
+          <select id="challenge-mode">
+            <option value="fixed">ثابت</option>
+            <option value="rotating">متغير</option>
+          </select>
+          <label>اسم التحدي</label>
+          <input id="challenge-title" type="text" placeholder="مثال: صلاة الوتر" />
+        </div>
+
+        <div id="view-challenges-section" class="content-section">
+          <div id="modal-challenges-list"></div>
+        </div>
+
       </div>
       <div class="modal-footer">
         <button id="modal-save" class="btn btn-green">حفظ</button>

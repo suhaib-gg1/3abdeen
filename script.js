@@ -115,14 +115,6 @@ function switchTab(activeTab, activeSection) {
 tabWorship.addEventListener("click", () => switchTab(tabWorship, worshipSection));
 tabCommunity.addEventListener("click", () => switchTab(tabCommunity, communitySection));
 
-// الوضع الليلي مع تبديل الهلال والشمس
-// تم حذف زر toggle-dark من الهيدر، لذا نحذف الكود التالي:
-// const toggleBtn = document.getElementById("toggle-dark");
-// toggleBtn.addEventListener("click", () => {
-//   document.documentElement.classList.toggle("dark");
-//   toggleBtn.textContent = document.documentElement.classList.contains("dark") ? "☀️" : "🌙";
-// });
-
 // تطبيق الوضع الليلي من التخزين عند التحميل (نسخة احتياطية لو لم يعمل سكربت head)
 document.addEventListener('DOMContentLoaded', () => {
   const theme = safeGet('theme', null);
@@ -490,6 +482,39 @@ function toggleDone(id, scope) {
   renderChallenges();
 }
 
+function deleteChallenge(id, scope, fromModal = false) {
+  const defaultFixedIds = new Set([
+    ...DEFAULT_CHALLENGES.daily.fixed.map(c => c.id),
+    ...DEFAULT_CHALLENGES.weekly.fixed.map(c => c.id),
+  ]);
+
+  if (defaultFixedIds.has(id)) {
+    alert('لا يمكن حذف التحديات الثابتة الافتراضية');
+    return;
+  }
+
+  const data = getChallenges();
+  data[scope].fixed = data[scope].fixed.filter(c => c.id !== id);
+  data[scope].rotatingPool = data[scope].rotatingPool.filter(c => c.id !== id);
+
+  saveChallenges(data);
+  renderChallenges();
+  if (fromModal) {
+    renderChallengesInModal(scope);
+  }
+}
+
+function resetRotatingChallenges(scope) {
+  const data = getChallenges();
+  if (scope === 'daily') {
+    data.daily.rotatingPool = DEFAULT_CHALLENGES.daily.rotatingPool;
+  } else {
+    data.weekly.rotatingPool = DEFAULT_CHALLENGES.weekly.rotatingPool;
+  }
+  saveChallenges(data);
+  renderChallengesInModal(scope);
+}
+
 // حساب إحصائيات الأسبوع الحالي
 function getWeekDates(base = new Date()) {
   // أسبوع يبدأ بالسبت وينتهي بالجمعة
@@ -683,14 +708,168 @@ function renderChallenges() {
   if (statLeft) statLeft.textContent = String(daysLeftInWeek());
 }
 
+let currentChallengeScope = 'daily';
+
 // نافذة الإضافة
 function openChallengeModal(presetScope = null) {
+  currentChallengeScope = presetScope;
   const modal = document.getElementById('challenge-modal');
   if (!modal) return;
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
   const scopeSel = document.getElementById('challenge-scope');
   if (presetScope && scopeSel) scopeSel.value = presetScope;
+
+  // Set initial state to add tab
+  const tabAdd = document.getElementById('tab-add-challenge');
+  const tabView = document.getElementById('tab-view-challenges');
+  const addSection = document.getElementById('add-challenge-section');
+  const viewSection = document.getElementById('view-challenges-section');
+  const modalSave = document.getElementById('modal-save');
+
+  // Ensure the 'Add' tab is active by default when opening
+  tabAdd.classList.add('active');
+  tabView.classList.remove('active');
+  addSection.classList.add('active');
+  viewSection.classList.remove('active');
+  modalSave.style.display = 'block';
+}
+
+function renderChallengesInModal(scope) {
+  const container = document.getElementById('modal-challenges-list');
+  container.innerHTML = '';
+  const challenges = getChallenges();
+  const defaultFixedIds = new Set([
+    'd-f-prayers', 'd-f-quran', 'd-f-adhkar',
+    'w-f-prayers', 'w-f-quran', 'w-f-adhkar',
+  ]);
+
+  const createList = (title, items, scope, isFixed, isUserAdded = false, ulId = null) => {
+    const section = document.createElement('div');
+    section.className = 'challenge-list-section';
+    const header = document.createElement('div');
+    header.className = 'section-header';
+    const h4 = document.createElement('h4');
+    h4.className = 'muted';
+    h4.textContent = title;
+    header.appendChild(h4);
+
+    if (!isFixed) {
+      const resetBtn = document.createElement('button');
+      resetBtn.className = 'btn btn-reset';
+      resetBtn.textContent = 'إعادة تعيين';
+      resetBtn.addEventListener('click', () => resetRotatingChallenges(scope));
+      header.appendChild(resetBtn);
+    }
+
+    section.appendChild(header);
+    const ul = document.createElement('ul');
+    ul.className = 'challenge-list';
+    if (ulId) {
+      ul.id = ulId;
+    }
+    if (isUserAdded) {
+      ul.classList.add('user-added-challenges');
+    }
+
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'challenge-item';
+      const span = document.createElement('span');
+      span.className = 'challenge-title';
+      span.textContent = item.title;
+      li.appendChild(span);
+
+      if (!isFixed || (isFixed && !defaultFixedIds.has(item.id))) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'challenge-delete';
+        deleteBtn.innerHTML = '&times;';
+        deleteBtn.addEventListener('click', () => {
+          deleteChallenge(item.id, scope, true);
+        });
+        li.appendChild(deleteBtn);
+      }
+      ul.appendChild(li);
+    });
+    section.appendChild(ul);
+    return section;
+  };
+
+  const defaultRotatingDaily = challenges.daily.rotatingPool.filter(c => DEFAULT_CHALLENGES.daily.rotatingPool.find(dc => dc.id === c.id));
+  const userRotatingDaily = challenges.daily.rotatingPool.filter(c => !DEFAULT_CHALLENGES.daily.rotatingPool.find(dc => dc.id === c.id));
+  const defaultRotatingWeekly = challenges.weekly.rotatingPool.filter(c => DEFAULT_CHALLENGES.weekly.rotatingPool.find(dc => dc.id === c.id));
+  const userRotatingWeekly = challenges.weekly.rotatingPool.filter(c => !DEFAULT_CHALLENGES.weekly.rotatingPool.find(dc => dc.id === c.id));
+
+  if (scope === 'daily') {
+    container.appendChild(createList('يومية ثابتة', challenges.daily.fixed, 'daily', true));
+
+    // Add selector for rotating challenges
+    const rotatingSelectorDiv = document.createElement('div');
+    rotatingSelectorDiv.className = 'challenge-selector-container';
+    rotatingSelectorDiv.innerHTML = `
+      <label for="daily-rotating-filter">عرض التحديات المتغيرة:</label>
+      <select id="daily-rotating-filter">
+        <option value="default">افتراضي</option>
+        <option value="added">مضاف</option>
+      </select>
+    `;
+    container.appendChild(rotatingSelectorDiv);
+
+    const defaultDailyRotatingSection = createList('يومية متغيرة (افتراضي)', defaultRotatingDaily, 'daily', false, false, 'daily-rotating-default-list');
+    const userDailyRotatingSection = createList('يومية متغيرة (مضاف)', userRotatingDaily, 'daily', false, true, 'daily-rotating-added-list');
+
+    container.appendChild(defaultDailyRotatingSection);
+    container.appendChild(userDailyRotatingSection);
+
+    // Initially hide the added list
+    userDailyRotatingSection.style.display = 'none';
+
+    const dailyRotatingFilter = rotatingSelectorDiv.querySelector('#daily-rotating-filter');
+    dailyRotatingFilter.addEventListener('change', (event) => {
+      if (event.target.value === 'default') {
+        defaultDailyRotatingSection.style.display = 'block';
+        userDailyRotatingSection.style.display = 'none';
+      } else {
+        defaultDailyRotatingSection.style.display = 'none';
+        userDailyRotatingSection.style.display = 'block';
+      }
+    });
+
+  } else if (scope === 'weekly') {
+    container.appendChild(createList('أسبوعية ثابتة', challenges.weekly.fixed, 'weekly', true));
+
+    // Add selector for rotating challenges
+    const rotatingSelectorDiv = document.createElement('div');
+    rotatingSelectorDiv.className = 'challenge-selector-container';
+    rotatingSelectorDiv.innerHTML = `
+      <label for="weekly-rotating-filter">عرض التحديات المتغيرة:</label>
+      <select id="weekly-rotating-filter">
+        <option value="default">افتراضي</option>
+        <option value="added">مضاف</option>
+      </select>
+    `;
+    container.appendChild(rotatingSelectorDiv);
+
+    const defaultWeeklyRotatingSection = createList('أسبوعية متغيرة (افتراضي)', defaultRotatingWeekly, 'weekly', false, false, 'weekly-rotating-default-list');
+    const userWeeklyRotatingSection = createList('أسبوعية متغيرة (مضاف)', userRotatingWeekly, 'weekly', false, true, 'weekly-rotating-added-list');
+
+    container.appendChild(defaultWeeklyRotatingSection);
+    container.appendChild(userWeeklyRotatingSection);
+
+    // Initially hide the added list
+    userWeeklyRotatingSection.style.display = 'none';
+
+    const weeklyRotatingFilter = rotatingSelectorDiv.querySelector('#weekly-rotating-filter');
+    weeklyRotatingFilter.addEventListener('change', (event) => {
+      if (event.target.value === 'default') {
+        defaultWeeklyRotatingSection.style.display = 'block';
+        userWeeklyRotatingSection.style.display = 'none';
+      } else {
+        defaultWeeklyRotatingSection.style.display = 'none';
+        userWeeklyRotatingSection.style.display = 'block';
+      }
+    });
+  }
 }
 
 function closeChallengeModal() {
@@ -733,6 +912,29 @@ document.addEventListener('DOMContentLoaded', () => {
   if (modalClose) modalClose.addEventListener('click', closeChallengeModal);
   if (backdrop) backdrop.addEventListener('click', closeChallengeModal);
   if (modalSave) modalSave.addEventListener('click', saveChallengeFromModal);
+
+  const tabAdd = document.getElementById('tab-add-challenge');
+  const tabView = document.getElementById('tab-view-challenges');
+  const addSection = document.getElementById('add-challenge-section');
+  const viewSection = document.getElementById('view-challenges-section');
+  const modalSaveBtn = document.getElementById('modal-save');
+
+  tabAdd.addEventListener('click', () => {
+    tabAdd.classList.add('active');
+    tabView.classList.remove('active');
+    addSection.classList.add('active');
+    viewSection.classList.remove('active');
+    modalSaveBtn.style.display = 'block';
+  });
+
+  tabView.addEventListener('click', () => {
+    tabView.classList.add('active');
+    tabAdd.classList.remove('active');
+    viewSection.classList.add('active');
+    addSection.classList.remove('active');
+    modalSaveBtn.style.display = 'none';
+    renderChallengesInModal(currentChallengeScope);
+  });
 
   // اعرض التحديات عند فتح تبويب التحديات
   const tabCommunity = document.getElementById('tab-community');
@@ -971,25 +1173,100 @@ function doneDhikr() {
 
 // الامتنان
 function saveGratitude() {
-  const text = document.getElementById("gratitude-text").value;
-  alert("تم الحفظ: " + text);
-  safeSet('gratitudeText', text);
+  const text = document.getElementById("gratitude-text").value.trim();
+  if (!text) {
+    alert("الرجاء كتابة شيء للامتنان.");
+    return;
+  }
+  let gratitudes = safeGet('gratitudeList', []);
+  gratitudes.unshift({ text: text, timestamp: new Date().toISOString() }); // Add to the beginning
+  safeSet('gratitudeList', gratitudes);
+  document.getElementById("gratitude-text").value = ''; // Clear the textarea
   
-  // تحديث النقاط فوراً
   updateLeaderboard();
 }
 
-// تحديث النقاط عند كتابة الامتنان
+function showGratitudeList() {
+  const modal = document.getElementById('gratitude-list-modal');
+  const container = document.getElementById('gratitude-list-container');
+  let gratitudes = safeGet('gratitudeList', []);
+
+  container.innerHTML = ''; // Clear previous list
+
+  if (gratitudes.length === 0) {
+    container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">لا توجد امتنانات محفوظة بعد.</p>';
+  } else {
+    gratitudes.forEach((item, index) => {
+      const gratitudeItem = document.createElement('div');
+      gratitudeItem.className = 'gratitude-item';
+      
+      const itemText = document.createElement('p');
+      itemText.textContent = item.text;
+      gratitudeItem.appendChild(itemText);
+
+      const itemDate = document.createElement('span');
+      itemDate.className = 'gratitude-date';
+      try {
+        const date = new Date(item.timestamp);
+        itemDate.textContent = date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+      } catch (e) {
+        itemDate.textContent = 'تاريخ غير معروف';
+      }
+      gratitudeItem.appendChild(itemDate);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'gratitude-delete-btn';
+      deleteBtn.innerHTML = '&times;';
+      deleteBtn.title = 'حذف الامتنان';
+      deleteBtn.onclick = () => deleteGratitudeItem(index);
+      gratitudeItem.appendChild(deleteBtn);
+
+      container.appendChild(gratitudeItem);
+    });
+  }
+
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeGratitudeListModal() {
+  const modal = document.getElementById('gratitude-list-modal');
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+}
+
+function deleteGratitudeItem(index) {
+    let gratitudes = safeGet('gratitudeList', []);
+    if (index > -1 && index < gratitudes.length) {
+      gratitudes.splice(index, 1); // Remove item at index
+      safeSet('gratitudeList', gratitudes);
+      showGratitudeList(); // Re-render the list
+      updateLeaderboard(); // Update points if needed
+    }
+}
+
+// تحديث النقاط عند كتابة الامتنان (هذا الجزء لم يعد له تأثير مباشر على النقاط)
 document.addEventListener('DOMContentLoaded', function() {
   const gratitudeText = document.getElementById('gratitude-text');
   if (gratitudeText) {
     gratitudeText.addEventListener('input', function() {
-      // تحديث النقاط عند الكتابة
-      setTimeout(updateLeaderboard, 100);
-      safeSet('gratitudeText', gratitudeText.value);
+      // لا يوجد تحديث مباشر للنقاط هنا، فقط حفظ النص المؤقت
+      // النقاط تُحسب عند حفظ الامتنان بشكل كامل
     });
   }
 });
+
+// ربط أزرار نافذة الامتنان عند تحميل DOM
+document.addEventListener('DOMContentLoaded', () => {
+  const gratitudeListCloseBtn = document.getElementById('gratitude-list-modal-close');
+  const gratitudeListModalCloseBtn = document.getElementById('gratitude-list-close');
+  const gratitudeListBackdrop = document.querySelector('#gratitude-list-modal .modal-backdrop');
+
+  if (gratitudeListCloseBtn) gratitudeListCloseBtn.addEventListener('click', closeGratitudeListModal);
+  if (gratitudeListModalCloseBtn) gratitudeListModalCloseBtn.addEventListener('click', closeGratitudeListModal);
+  if (gratitudeListBackdrop) gratitudeListBackdrop.addEventListener('click', closeGratitudeListModal);
+});
+
 
 // تحديث إحصائيات المجتمع
 function updateCommunityStats() {
@@ -1247,10 +1524,10 @@ function restoreState() {
   dhikrCount = getDhikrCountForActiveDay();
 
   // استرجاع الامتنان
-  const savedGratitude = safeGet('gratitudeText', '');
+  const savedGratitudes = safeGet('gratitudeList', []);
   const gInput = document.getElementById('gratitude-text');
-  if (gInput && typeof savedGratitude === 'string') {
-    gInput.value = savedGratitude;
+  if (gInput) {
+    gInput.value = ''; // Clear the textarea on load
   }
 
   // تحديث الشريط المشترك
@@ -1276,13 +1553,13 @@ const DHIKR_TYPES = {
   taj: {
     title: 'تاج الذكر',
     items: [
-      { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير', repeat: 100 }
+      { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير', repeat: 10 }
     ]
   },
   wudu: {
     title: 'بعد الوضوء',
     items: [
-      { text: 'أشهد أن لا إله إلا الله وحده لا شريك له وأشهد أن محمداً عبده ورسوله', repeat: 1 }
+      { text: 'أشهد أن لا إله إلا الله وحده لا شريك له، وأشهد أن محمدًا عبده ورسوله، اللهم اجعلني من التوابين واجعلني من المتطهرين', repeat: 1 }
     ]
   },
   subhan: {
@@ -1405,7 +1682,7 @@ const MOSQUE_AZKAR = {
   Asr: [
     { text: 'أستغفر الله، أستغفر الله، أستغفر الله', repeat: 3 },
     { text: 'اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام', repeat: 1 },
-    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. لا حول ولا قوة إلا بالله، لا إله إلا الله، ولا نعبد إلا إياه، له النعمة وله الفضل وله الثناء الحسن، لا إله إلا الله مخلصين له الدين ولو كره الكافرون.', repeat: 1 },
+    { text: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير. لا حول. لا قوة إلا بالله، لا إله إلا الله، ولا نعبد إلا إياه، له النعمة وله الفضل وله الثناء الحسن، لا إله إلا الله مخلصين له الدين ولو كره الكافرون.', repeat: 1 },
     { text: 'اللهم لا مانع لما أعطيت، ولا معطي لما منعت، ولا ينفع ذا الجد منك الجد.', repeat: 1 },
     { text: 'سبحان الله', repeat: 33 },
     { text: 'الحمد لله', repeat: 33 },
@@ -1503,7 +1780,7 @@ function showMosqueAzkar() {
     Isha: "العشاء"
   };
   if (titleElement && prayerKey) {
-    titleElement.textContent = `أذكار المسجد - ${prayerNames[prayerKey]}`;
+    titleElement.textContent = `أذكار صلاه - ${prayerNames[prayerKey]}`;
   }
 
   // تحديث حالة الأزرار
@@ -1567,7 +1844,7 @@ function azkarFinish() {
   // التحقق إذا كانت نافذة أذكار المسجد هي النشطة
   if (mosqueAzkarState.list.length > 0 && mosqueAzkarState.prayerKey) {
     const { prayerKey } = mosqueAzkarState;
-    const completedKey = `completedMosqueAzkar:${todayKey()}`;
+    const completedKey = `completedMosqueAzkar:${fajrDayKey()}`;
     const completed = new Set(safeGet(completedKey, []));
 
     if (!completed.has(prayerKey)) {
@@ -1604,5 +1881,3 @@ function azkarFinish() {
     closeAzkarModal();
   }
 }
-
-

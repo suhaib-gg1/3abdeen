@@ -1,7 +1,9 @@
-body{margin:0;font-family:sans-serif;background:#f3f4f6;color:#1f2937;transition:0.5s;}
+body{margin:0;font-family:sans-serif;background:#f3f4f6;color:#1f2937;transition: background-color 0.3s, color 0.3s;}
 html.dark body{background:#0f172a;color:#e2e8f0;} 
 
-header{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.1);position:sticky;top:0;z-index:50;transition:0.5s;}
+header{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.1);position:sticky;top:0;z-index:50;transition: background-color 0.3s;}
+html.dark header{background:#1e293b;}
+html.dark header{background:#1e293b;}
 html.dark header{background:#1e293b;}
 header h1{font-size:1.2rem;} /* عنوان أصغر */
 .app-logo{width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-left:0.4rem}
@@ -97,7 +99,7 @@ html.dark #toggle-dark{background:#334155;}
 }
 
 main{padding:1rem;display:flex;flex-direction:column;gap:1.5rem;max-width:1200px;margin:0 auto;}
-.card{background:#fff;border-radius:1rem;padding:1rem;box-shadow:0 4px 12px rgba(0,0,0,0.08);transition:0.5s;border:1px solid rgba(0,0,0,0.05);}
+.card{background:#fff;border-radius:1rem;padding:1rem;box-shadow:0 4px 12px rgba(0,0,0,0.08);transition: background-color 0.3s, color 0.3s, box-shadow 0.3s, transform 0.3s;border:1px solid rgba(0,0,0,0.05);}
 .card:hover{box-shadow:0 8px 25px rgba(0,0,0,0.12);transform:translateY(-2px);}
 html.dark .card{background:#1e293b;border-color:rgba(255,255,255,0.1);}
 html.dark .card:hover{box-shadow:0 8px 25px rgba(0,0,0,0.3);}
@@ -131,8 +133,7 @@ html.dark .card-header:hover {
 }
 
 .card-header i {
-  color: #3b82f6;
-  transition: 0.3s;
+  font-size: 1rem;
 }
 
 html.dark .card-header i {
@@ -240,7 +241,7 @@ html.dark #clock{color:#e2e8f0;}
   padding: 1rem;
   background: linear-gradient(135deg, #f8fafc, #e2e8f0);
   border-radius: 0.75rem;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s, color 0.3s, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 html.dark .stat-item {
@@ -376,7 +377,7 @@ html.dark .community-tab .stat-item {
 }
 
 html.dark .community-tab .stat-number {
-  color: #ffffff;
+  color: #60a5fa;
 }
 
 .community-tab .stat-label {
@@ -498,7 +499,7 @@ html.dark .competition-subtitle {
   background: rgba(255, 255, 255, 0.8);
   border-radius: 0.75rem;
   border: 1px solid rgba(0,0,0,0.05);
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 html.dark .leaderboard-item {
@@ -930,10 +931,6 @@ html.dark .side-menu-item:hover {
     padding: 1.5rem;
   }
   
-  .card-header {
-    font-size: 1.1rem;
-  }
-  
   .btn {
     padding: 0.5rem 1.25rem;
     font-size: 1rem;
@@ -1048,13 +1045,71 @@ html.dark .muted { color: #cbd5e1; }
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0.75rem;
-  background: rgba(255,255,255,0.8);
+  background: rgba(211, 211, 211, 0.808);
   border: 1px solid rgba(0,0,0,0.05);
   border-radius: 0.5rem;
+  transition: background-color 0.3s;
 }
 html.dark .challenge-item {
   background: rgba(255,255,255,0.06);
   border-color: rgba(255,255,255,0.12);
+}
+
+.challenge-delete {
+  background-color: #ef4444; /* red-500 */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.challenge-delete:hover {
+  background-color: #dc2626; /* red-600 */
+}
+
+.btn-reset {
+  background-color: #e5e7eb; /* gray-200 */
+  color: #4b5563; /* gray-600 */
+  border: 1px solid #d1d5db; /* gray-300 */
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.5rem; /* Add some space above */
+}
+
+.btn-reset:hover {
+  background-color: #d1d5db; /* gray-300 */
+  border-color: #9ca3af; /* gray-400 */
+}
+
+html.dark .btn-reset {
+  background-color: #4b5563; /* gray-600 */
+  color: #e5e7eb; /* gray-200 */
+  border-color: #6b7280; /* gray-500 */
+}
+
+html.dark .btn-reset:hover {
+  background-color: #6b7280; /* gray-500 */
+  border-color: #9ca3af; /* gray-400 */
+}
+
+.user-added-challenges {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+html.dark .user-added-challenges {
+  border-top-color: #475569;
 }
 
 .challenge-check {
@@ -1128,7 +1183,29 @@ html.dark .modal-close {
 html.dark .modal-close:hover { 
   color: #f9fafb; 
 }
-.modal-body { display:flex; flex-direction:column; gap:0.75rem; padding: 1rem 1.25rem; }
+.modal-body { display:flex; flex-direction:column; gap:0.75rem; padding: 1rem 1.25rem; max-height: 70vh; overflow-y: auto; }
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.modal-body::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+html.dark .modal-body::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+html.dark .modal-body::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+html.dark .modal-body::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
 .modal-body label { font-size: 0.9rem; color:#374151; }
 html.dark .modal-body label { color:#e2e8f0; }
 .modal-body input[type="text"], .modal-body select {
@@ -1197,7 +1274,7 @@ html.dark #gratitude-list-container::-webkit-scrollbar-thumb:hover {
   padding: 1rem;
   margin-bottom: 1rem;
   background: #f9f9f9;
-  transition: all 0.2s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 html.dark .gratitude-item {
@@ -1242,7 +1319,7 @@ html.dark .gratitude-date {
 }
 
 .gratitude-delete-btn:hover {
-  background: #ff0000;
+  background: #a80000;
 }
 
 /* تنسيقات خاصة لزر الإغلاق في نافذة قائمة الامتنانات */
@@ -1315,11 +1392,12 @@ html.dark #azkar-modal-close:hover {
 #azkar .card-content > div:last-child {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #2566e7;
+
 }
 
 html.dark #azkar .card-content > div:last-child {
-  border-top-color: rgba(255, 255, 255, 0.12);
+  border-top-color: #3b82f6;
 }
 
 #azkar .card-content > div:last-child > p {
@@ -1556,4 +1634,79 @@ html.dark #gratitude .card-content > div .btn:active {
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
+}
+
+.challenge-selector-container {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.challenge-selector-container label {
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+html.dark .challenge-selector-container label {
+  color: #e2e8f0;
+}
+
+.challenge-selector-container select {
+  flex: 1;
+  max-width: 200px; /* Adjust as needed */
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.gratitude-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f0f4f8;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+html.dark .gratitude-item {
+  background: #2d3748;
+}
+
+.gratitude-item p {
+  margin: 0;
+  flex-grow: 1;
+  color: #1f2937;
+}
+
+html.dark .gratitude-item p {
+  color: #e2e8f0;
+}
+
+.gratitude-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-left: 1rem;
+  white-space: nowrap;
+}
+
+html.dark .gratitude-date {
+  color: #cbd5e1;
+}
+
+.gratitude-delete-btn {
+  background: none;
+  border: none;
+  color: #ef4444; /* red-500 */
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  transition: color 0.2s;
+}
+
+.gratitude-delete-btn:hover {
+  color: #ffffff; /* red-600 */
 }
