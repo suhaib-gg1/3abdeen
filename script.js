@@ -1182,7 +1182,6 @@ function saveGratitude() {
   gratitudes.unshift({ text: text, timestamp: new Date().toISOString() }); // Add to the beginning
   safeSet('gratitudeList', gratitudes);
   document.getElementById("gratitude-text").value = ''; // Clear the textarea
-  
   updateLeaderboard();
 }
 
@@ -1548,6 +1547,47 @@ if (document.readyState === 'loading') {
 }
 
 
+  
+
+
+
+// =================== تعليمات الاستخدام ===================
+function openInstructionsModal() {
+  const modal = document.getElementById('instructions-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+}
+
+function closeInstructionsModal() {
+  const modal = document.getElementById('instructions-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const showInstructionsBtn = document.getElementById('show-instructions-menu');
+  const instructionsModalCloseBtn = document.getElementById('instructions-modal-close');
+  const instructionsCloseBtn = document.getElementById('instructions-close');
+  const instructionsBackdrop = document.querySelector('#instructions-modal .modal-backdrop');
+
+  if (showInstructionsBtn) {
+    showInstructionsBtn.addEventListener('click', openInstructionsModal);
+  }
+  if (instructionsModalCloseBtn) {
+    instructionsModalCloseBtn.addEventListener('click', closeInstructionsModal);
+  }
+  if (instructionsCloseBtn) {
+    instructionsCloseBtn.addEventListener('click', closeInstructionsModal);
+  }
+  if (instructionsBackdrop) {
+    instructionsBackdrop.addEventListener('click', closeInstructionsModal);
+  }
+});
+
 // =================== أذكار "لا تسكت" ===================
 const DHIKR_TYPES = {
   taj: {
@@ -1857,11 +1897,10 @@ function azkarFinish() {
         mosqueBtn.classList.add("done");
         mosqueBtn.innerHTML = "✅";
       }
-
-      // تحديث شريط التقدم والنقاط
-      updateCombinedProgress();
-      updateLeaderboard();
     }
+    // تحديث شريط التقدم والنقاط
+    updateCombinedProgress();
+    updateLeaderboard();
     
     closeAzkarModal();
 

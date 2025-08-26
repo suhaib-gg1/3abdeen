@@ -177,7 +177,7 @@ html.dark .progress-bar-bg{background:#475569;}
 .mosque-fill{background:linear-gradient(90deg,#8b5cf6,#7c3aed);}
 .combined-fill{background:linear-gradient(90deg,#3b82f6,#8b5cf6);}
 
-.btn{padding:0.4rem 0.8rem;border-radius:0.5rem;color:#fff;border:none;font-size:0.9rem;cursor:pointer;transition:0.3s;min-height:2.5rem;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+.btn{padding:0.4rem 0.8rem;border-radius:0.5rem;color:#ffffff;border:none;font-size:0.9rem;cursor:pointer;transition:0.3s;min-height:2.5rem;box-shadow:0 2px 4px rgba(0, 0, 0, 0.795);}
 .btn:hover{transform:translateY(-1px);box-shadow:0 4px 8px rgba(0,0,0,0.15);}
 .btn-green{background:linear-gradient(135deg,#16a34a,#15803d);}
 .btn-blue{background:linear-gradient(135deg,#2563eb,#1d4ed8);}
@@ -694,6 +694,9 @@ html.dark .side-menu {
   box-shadow: 0 4px 24px rgba(0,0,0,0.4);
 }
 .side-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   background: none;
   border: none;
   color: #3b82f6;
@@ -1151,19 +1154,23 @@ html.dark .challenge-check { background: #1e293b; border-color: #94a3b8; }
 .challenge-title { flex: 1; font-weight: 400; }
 
 /* ===== نافذة الإضافة (Modal) ===== */
-.modal { position: fixed; inset: 0; z-index: 1000; }
+.modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
 .modal.hidden { display: none; }
 .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
 .modal-content {
   position: relative;
-  width: min(520px, 92%);
-  margin: 10vh auto;
+  width: min(400px, 90%); /* Smaller width for instructions modal */
+  margin: 3vh auto; /* Adjust margin for better vertical positioning */
   background: #fff;
   border-radius: 0.75rem;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-  overflow: hidden;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.05);
 }
-html.dark .modal-content { background: #1e293b; color: #e2e8f0; }
+html.dark .modal-content {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-color: rgba(255,255,255,0.1);
+}
 .modal-header { display:flex; align-items:center; justify-content:space-between; padding: 1rem 1.25rem; border-bottom: 1px solid #e5e7eb; }
 html.dark .modal-header { border-color: rgba(255,255,255,0.12); }
 .modal-close { 
@@ -1183,7 +1190,7 @@ html.dark .modal-close {
 html.dark .modal-close:hover { 
   color: #f9fafb; 
 }
-.modal-body { display:flex; flex-direction:column; gap:0.75rem; padding: 1rem 1.25rem; max-height: 70vh; overflow-y: auto; }
+.modal-body { display:flex; flex-direction:column; gap:1rem; padding: 1.5rem 1.75rem; max-height: 70vh; overflow-y: auto; font-size: 1.05rem; line-height: 1.7; }
 .modal-body::-webkit-scrollbar {
   width: 8px;
 }
@@ -1214,7 +1221,7 @@ html.dark .modal-body label { color:#e2e8f0; }
   border-radius: 0.6rem;
   border: 2px solid #e5e7eb;
   background: #fafafa;
-  display: block;
+  display: block; 
   box-sizing: border-box;
 }
 /* اجعل حقل اسم التحدي أطول وأكثر وضوحاً */
@@ -1709,4 +1716,21 @@ html.dark .gratitude-date {
 
 .gratitude-delete-btn:hover {
   color: #ffffff; /* red-600 */
+}
+
+@media (max-width: 320px) {
+  .modal-content {
+    width: 95%;
+    margin: 2vh auto;
+  }
+  .modal-header {
+    padding: 0.75rem 1rem;
+  }
+  .modal-body {
+    padding: 1rem 1.25rem;
+    font-size: 0.95rem;
+  }
+}
+#instructions-close{
+  background-color: #475569;
 }
