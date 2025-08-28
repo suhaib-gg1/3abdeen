@@ -296,7 +296,7 @@ const DEFAULT_CHALLENGES = {
     fixed: [
       { id: 'd-f-prayers', title: 'الصلاه في المسجد خمس صلوات' },
       { id: 'd-f-quran', title: 'قراءة القران' },
-      { id: 'd-f-adhkar', title: 'اذكار الصباح و المساء' }
+      { id: 'd-f-adhkar', title: 'الاذكار' }
     ],
     rotatingPool: [
       { id: 'd-r-1', title: 'صلاة الوتر' },
@@ -347,7 +347,7 @@ const DEFAULT_CHALLENGES = {
     fixed: [
       { id: 'w-f-prayers', title: 'الصلاه في المسجد خمس صلوات لمدة اسبوع' },
       { id: 'w-f-quran', title: 'قراءة القران لمدة اسبوع' },
-      { id: 'w-f-adhkar', title: 'اذكار الصباح و المساء لمدة اسبوع' }
+      { id: 'w-f-adhkar', title: 'الاذكار لمدة اسبوع' }
     ],
     rotatingPool: [
       { id: 'w-r-1', title: 'صلاة الوتر كل ليلة خلال الأسبوع' },
@@ -497,7 +497,43 @@ function deleteChallenge(id, scope, fromModal = false) {
   data[scope].fixed = data[scope].fixed.filter(c => c.id !== id);
   data[scope].rotatingPool = data[scope].rotatingPool.filter(c => c.id !== id);
 
+  // إذا تم حذف تحدي، قم بإزالته من قائمة المنجز والمختار لليوم/الأسبوع
+  if (scope === 'daily') {
+    const today = todayKey();
+    const doneKey = doneDailyKey(today);
+    const selectedKey = selectedDailyKey(today);
+    
+    const doneSet = new Set(safeGet(doneKey, []));
+    if (doneSet.has(id)) {
+      doneSet.delete(id);
+      safeSet(doneKey, Array.from(doneSet));
+    }
+
+    const selectedArr = safeGet(selectedKey, []);
+    const newSelectedArr = selectedArr.filter(selectedId => selectedId !== id);
+    if (selectedArr.length !== newSelectedArr.length) {
+      safeSet(selectedKey, newSelectedArr);
+    }
+  } else if (scope === 'weekly') {
+    const wk = weekKey();
+    const doneKey = doneWeeklyKey(wk);
+    const selectedKey = selectedWeeklyKey(wk);
+
+    const doneSet = new Set(safeGet(doneKey, []));
+    if (doneSet.has(id)) {
+      doneSet.delete(id);
+      safeSet(doneKey, Array.from(doneSet));
+    }
+
+    const selectedArr = safeGet(selectedKey, []);
+    const newSelectedArr = selectedArr.filter(selectedId => selectedId !== id);
+    if (selectedArr.length !== newSelectedArr.length) {
+      safeSet(selectedKey, newSelectedArr);
+    }
+  }
+
   saveChallenges(data);
+  ensureSelections(); // التأكد من اختيار بديل إذا لزم الأمر
   renderChallenges();
   if (fromModal) {
     renderChallengesInModal(scope);
